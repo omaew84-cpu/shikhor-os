@@ -1,0 +1,421 @@
+<html lang="th"><head>
+<!-- Playables SDK -->
+<script>// Playables SDK v1.0.0
+// Game lifecycle bridge: rAF-based game-ready detection + event communication
+(function() {
+  'use strict';
+
+  // Idempotency: skip if already initialized (e.g., server-side injection
+  // followed by client-side inject-javascript via the Bloks webview component).
+  if (window.playablesSDK) return;
+
+  var HANDLER_NAME = 'playablesGameEventHandler';
+  var ANDROID_BRIDGE_NAME = '_MetaPlayablesBridge';
+  var RAF_FRAME_THRESHOLD = 3;
+
+  var gameReadySent = false;
+  var firstInteractionSent = false;
+  var errorSent = false;
+  var frameCount = 0;
+  var originalRAF = window.requestAnimationFrame;
+
+  // --- Transport Layer ---
+
+  function hasIOSBridge() {
+    return !!(window.webkit &&
+              window.webkit.messageHandlers &&
+              window.webkit.messageHandlers[HANDLER_NAME]);
+  }
+
+  function hasAndroidBridge() {
+    return !!(window[ANDROID_BRIDGE_NAME] &&
+              typeof window[ANDROID_BRIDGE_NAME].postEvent === 'function');
+  }
+
+  function isInIframe() {
+    return !!(window.parent && window.parent !== window);
+  }
+
+  function sendEvent(eventName, payload) {
+    var message = {
+      type: eventName,
+      payload: payload || {},
+      timestamp: Date.now()
+    };
+
+    if (hasIOSBridge()) {
+      try {
+        window.webkit.messageHandlers[HANDLER_NAME].postMessage(message);
+      } catch (e) { /* ignore */ }
+      return;
+    }
+
+    if (hasAndroidBridge()) {
+    try {
+      var p = payload || {};
+      p.__secureToken = window.__fbAndroidBridgeAuthToken || '';
+      p.timestamp = message.timestamp;
+      window[ANDROID_BRIDGE_NAME].postEvent(
+        eventName,
+        JSON.stringify(p)
+      );
+    } catch (e) { /* ignore */ }
+    return;
+  }
+
+    if (isInIframe()) {
+      try {
+        window.parent.postMessage(message, '*');
+      } catch (e) { /* ignore */ }
+      return;
+    }
+  }
+
+  // --- rAF Game-Ready Detection ---
+
+  function onFrame() {
+    if (gameReadySent) return;
+
+    frameCount++;
+    if (frameCount >= RAF_FRAME_THRESHOLD) {
+      gameReadySent = true;
+      sendEvent('game_ready', {
+        frame_count: frameCount,
+        detected_at: Date.now()
+      });
+      return;
+    }
+
+    originalRAF.call(window, onFrame);
+  }
+
+  if (originalRAF) {
+    window.requestAnimationFrame = function(callback) {
+      if (!gameReadySent) {
+        return originalRAF.call(window, function(timestamp) {
+          frameCount++;
+          if (frameCount >= RAF_FRAME_THRESHOLD && !gameReadySent) {
+            gameReadySent = true;
+            sendEvent('game_ready', {
+              frame_count: frameCount,
+              detected_at: Date.now()
+            });
+          }
+          callback(timestamp);
+        });
+      }
+      return originalRAF.call(window, callback);
+    };
+  }
+
+  // --- First User Interaction Detection ---
+
+  function setupFirstInteractionDetection() {
+    var events = ['touchstart', 'mousedown', 'keydown'];
+
+    function onFirstInteraction() {
+      if (firstInteractionSent) return;
+      firstInteractionSent = true;
+      sendEvent('user_interaction_start', null);
+
+      for (var i = 0; i < events.length; i++) {
+        document.removeEventListener(events[i], onFirstInteraction, true);
+      }
+    }
+
+    for (var i = 0; i < events.length; i++) {
+      document.addEventListener(events[i], onFirstInteraction, true);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupFirstInteractionDetection);
+  } else {
+    setupFirstInteractionDetection();
+  }
+
+  // --- Auto Error Capture ---
+
+  window.addEventListener('error', function(event) {
+    if (errorSent) return;
+    errorSent = true;
+    sendEvent('error', {
+      message: event.message || 'Unknown error',
+      source: event.filename || '',
+      lineno: event.lineno || 0,
+      colno: event.colno || 0,
+      auto_captured: true
+    });
+  });
+
+  window.addEventListener('unhandledrejection', function(event) {
+    if (errorSent) return;
+    errorSent = true;
+    var reason = event.reason;
+    sendEvent('error', {
+      message: (reason instanceof Error) ? reason.message : String(reason),
+      type: 'unhandled_promise_rejection',
+      auto_captured: true
+    });
+  });
+
+  // --- Public API ---
+
+  window.playablesSDK = {
+    complete: function(score) {
+      sendEvent('game_ended', {
+        score: score,
+        completed: true
+      });
+    },
+
+    error: function(message) {
+      if (errorSent) return;
+      errorSent = true;
+      sendEvent('error', {
+        message: message || 'Unknown error',
+        auto_captured: false
+      });
+    },
+
+    sendEvent: function(eventName, payload) {
+      if (!eventName || typeof eventName !== 'string') return;
+      sendEvent(eventName, payload);
+    }
+  };
+
+  // Kick off rAF detection in case no game code calls rAF immediately
+  if (originalRAF) {
+    originalRAF.call(window, onFrame);
+  }
+})();</script>
+<!-- PLAYABLE_TOUCH_PATCH_V1 --><script>
+(function() {
+  if (window.__playableTouchPatchInstalled) return;
+  window.__playableTouchPatchInstalled = true;
+  var origAdd = EventTarget.prototype.addEventListener;
+  var blockedTypes = { touchstart: 1, touchmove: 1, wheel: 1 };
+  EventTarget.prototype.addEventListener = function(type, listener, options) {
+    if (blockedTypes[type]) {
+      if (options === undefined || options === null) {
+        options = { passive: true };
+      } else if (typeof options === 'boolean') {
+        options = { capture: options, passive: true };
+      } else {
+        options = Object.assign({}, options, { passive: true });
+      }
+    }
+    return origAdd.call(this, type, listener, options);
+  };
+})();
+</script><script>window.Intl=window.Intl||{};Intl.t=function(s){return(Intl._locale&&Intl._locale[s])||s;};</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHIKHOR OS — v1 | Enterprise Control Plane</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;600&display=swap');
+:root{--bg:#0a0e14;--panel:#111823;--green:#00ff88;--cyan:#00d4ff;--amber:#ffb000;--text:#e6f1ff;--muted:#7a8aa0}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:Inter,system-ui;overflow-x:hidden}
+.header{display:flex;justify-content:space-between;align-items:center;padding:16px 24px;border-bottom:1px solid #1e293b;background:linear-gradient(90deg,#0a0e14,#111823)}
+.logo{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:600;letter-spacing:1px}
+.logo span{color:var(--green)}
+.subtitle{font-size:12px;color:var(--muted);margin-top:2px}
+.badges{display:flex;gap:12px;align-items:center}
+.badge{padding:4px 10px;border:1px solid var(--green);border-radius:4px;font-size:11px;font-family:'JetBrains Mono';color:var(--green)}
+.status{width:8px;height:8px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.grid{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:16px;padding:16px;max-width:1600px;margin:0 auto}
+.panel{background:var(--panel);border:1px solid #1e293b;border-radius:12px;padding:16px;position:relative;overflow:hidden}
+.panel::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.5}
+.panel h3{font-family:'JetBrains Mono';font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--cyan);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.map{height:220px;position:relative;background:radial-gradient(circle at center,#0f172a 0%,transparent 70%)}
+.node{position:absolute;width:10px;height:10px;background:var(--cyan);border-radius:50%;box-shadow:0 0 12px var(--cyan);animation:blink 3s infinite}
+.node::after{content:'';position:absolute;width:24px;height:24px;border:1px solid var(--cyan);border-radius:50%;top:-7px;left:-7px;animation:ripple 3s infinite;opacity:.5}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.6}}
+@keyframes ripple{0%{transform:scale(.8);opacity:.6}100%{transform:scale:1.5;opacity:0}}
+.metric{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.card{background:#0d1420;border:1px solid #1e293b;border-radius:8px;padding:12px}
+.card .label{font-size:11px;color:var(--muted);text-transform:uppercase}
+.card .value{font-family:'JetBrains Mono';font-size:24px;margin:4px 0;color:var(--green)}
+.card .sub{font-size:11px;color:var(--muted)}
+.spark{height:24px;margin-top:6px}
+.ai-core{text-align:center;padding:20px 0}
+.ai-visual{width:120px;height:120px;margin:0 auto 12px;position:relative}
+.orbit{position:absolute;border:1px solid var(--cyan);border-radius:50%;opacity:.3;animation:rotate 20s linear infinite}
+.orbit:nth-child(1){width:100%;height:100%;top:0;left:0}
+.orbit:nth-child(2){width:80%;height:80%;top:10%;left:10%;animation-direction:reverse}
+.orbit:nth-child(3){width:60%;height:60%;top:20%;left:20%}
+@keyframes rotate{to{transform:rotate(360deg)}}
+.core{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:40px;height:40px;background:var(--green);border-radius:50%;box-shadow:0 0 30px var(--green);animation:pulse 2s infinite}
+.terminal{background:#020617;border:1px solid #1e293b;border-radius:8px;padding:12px;font-family:'JetBrains Mono';font-size:13px;height:180px;overflow-y:auto;margin-top:12px}
+.terminal-line{margin:4px 0}
+.prompt{color:var(--green)}
+.cmd{color:var(--cyan)}
+.feed{height:160px;overflow:hidden;position:relative;font-family:'JetBrains Mono';font-size:12px}
+.feed-item{padding:4px 0;border-left:2px solid transparent;padding-left:8px;margin:2px 0;animation:slide 0.5s}
+.feed-item.agent{border-color:var(--cyan);color:#a5f3fc}
+.feed-item.threat{border-color:var(--amber);color:#fde68a}
+.feed-item.deploy{border-color:var(--green);color:#bbf7d0}
+@keyframes slide{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+.footer{text-align:center;padding:12px;font-size:11px;color:var(--muted);border-top:1px solid #1e293b;margin-top:16px}
+input.terminal-input{background:transparent;border:none;color:var(--text);font-family:'JetBrains Mono';width:70%;outline:none}
+@media(max-width:1024px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <div class="logo">SHIKHOR <span>OS</span> — v1</div>
+    <div class="subtitle">Enterprise Control Plane • โครงข่ายเน็กซัส • Vector AI Core</div>
+  </div>
+  <div class="badges">
+    <div class="badge">SOC2</div>
+    <div class="badge">ISO27001</div>
+    <div class="status"></div>
+    <span style="font-size:12px;color:var(--green);font-family:'JetBrains Mono'">SECURE</span>
+  </div>
+</div>
+
+<div class="grid">
+  <!-- Left -->
+  <div class="panel">
+    <h3>● GLOBAL NEXUS NETWORK</h3>
+    <div class="map" id="map">
+      <div class="node" style="top:38%;left:14%" title="San Francisco"></div>
+      <div class="node" style="top:32%;left:48%" title="Frankfurt"></div>
+      <div class="node" style="top:58%;left:72%" title="Singapore"></div>
+      <div class="node" style="top:42%;left:82%" title="Tokyo"></div>
+      <div class="node" style="top:72%;left:86%" title="Sydney"></div>
+      <div class="node" style="top:54%;left:69%" title="Chaiyaphum"></div>
+    </div>
+    <div style="margin-top:12px;font-size:12px;color:var(--muted);font-family:'JetBrains Mono'">
+      6 Regions • 84 Edge Nodes • โครงสร้างพื้นฐานคลาวด์
+    </div>
+  </div>
+
+  <!-- Center -->
+  <div class="panel">
+    <h3>● REAL-TIME METRICS</h3>
+    <div class="metric">
+      <div class="card"><div class="label">Response Time</div><div class="value" id="latency">12ms</div><div class="sub">อัตราการตอบสนอง</div><svg class="spark" viewBox="0 0 100 24"><polyline fill="none" stroke="#00ff88" stroke-width="2" points="0,18 20,14 40,16 60,8 80,12 100,6"></polyline></svg></div>
+      <div class="card"><div class="label">Uptime</div><div class="value">99.99%</div><div class="sub">เสถียรภาพระบบ</div><svg class="spark" viewBox="0 0 100 24"><polyline fill="none" stroke="#00d4ff" stroke-width="2" points="0,6 20,6 40,5 60,7 80,6 100,6"></polyline></svg></div>
+      <div class="card"><div class="label">Threats Blocked</div><div class="value" id="threats">1,247</div><div class="sub">เฝ้าระวังภัยคุกคาม</div></div>
+      <div class="card"><div class="label">Active Agents</div><div class="value" id="agents">84</div><div class="sub">ปัญญาประดิษฐ์แบบอัตโนมัติ</div></div>
+      <div class="card" style="grid-column:span 2"><div class="label">Workflows Running</div><div class="value" id="workflows">3,412</div><div class="sub">ควบคุมเวิร์กโฟลว์ขนาดใหญ่</div></div>
+    </div>
+  </div>
+
+  <!-- Right -->
+  <div class="panel">
+    <h3>● VECTOR AI CORE</h3>
+    <div class="ai-core">
+      <div class="ai-visual">
+        <div class="orbit"></div><div class="orbit"></div><div class="orbit"></div>
+        <div class="core"></div>
+      </div>
+      <div style="font-family:'JetBrains Mono';color:var(--green);font-size:14px">OPERATIONAL</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">กำลังวิเคราะห์และตัดสินใจเชิงลึก</div>
+      <div style="margin-top:8px;font-size:11px">Confidence: <span style="color:var(--cyan)">98.7%</span></div>
+    </div>
+  </div>
+
+  <!-- Bottom left -->
+  <div class="panel" style="grid-column:span 1">
+    <h3>● AUTONOMOUS ACTIVITY</h3>
+    <div class="feed" id="feed"></div>
+  </div>
+
+  <!-- Bottom right -->
+  <div class="panel" style="grid-column:span 2">
+    <h3>● TERMINAL — สั่งการผ่านเทอร์มินัล</h3>
+    <div class="terminal" id="terminal">
+      <div class="terminal-line"><span class="prompt">shikhor@nexus:~$</span> <span class="cmd">welcome</span></div>
+      <div class="terminal-line">SHIKHOR OS v1 Enterprise — ระบบปฏิบัติการระดับวิสาหกิจ</div>
+      <div class="terminal-line">Type 'help' for commands</div>
+    </div>
+    <div style="display:flex;align-items:center;margin-top:8px;font-family:'JetBrains Mono';font-size:13px">
+      <span class="prompt">shikhor@nexus:~$</span>
+      <input class="terminal-input" id="cmdInput" placeholder="status | deploy | scan | agents" autofocus="">
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  SHIKHOR OS v1 • ออกแบบเพื่อการบริหารจัดการโครงสร้างพื้นฐานที่ซับซ้อน • ความปลอดภัยมาตรฐานสากล • Chaiyaphum → Global Edge
+</div>
+
+<script>
+const feed = document.getElementById('feed');
+const activities = [
+  {type:'agent',text:'Agent-47 deployed workflow in Singapore'},
+  {type:'threat',text:'Threat blocked: DDoS attempt Frankfurt'},
+  {type:'deploy',text:'Nexus sync completed Tokyo region'},
+  {type:'agent',text:'Vector AI Core optimized routing'},
+  {type:'deploy',text:'Autonomous scaling triggered Sydney'},
+  {type:'agent',text:'Agent-12 analyzing threat patterns'},
+];
+function addFeed(){
+  const item = activities[Math.floor(Math.random()*activities.length)];
+  const div = document.createElement('div');
+  const time = new Date().toLocaleTimeString('en-GB');
+  div.className = 'feed-item '+item.type;
+  div.textContent = `[${time}] ${item.text}`;
+  feed.prepend(div);
+  if(feed.children.length>8) feed.removeChild(feed.lastChild);
+}
+setInterval(addFeed,2200); addFeed();
+
+setInterval(()=>{
+  document.getElementById('latency').textContent = (10+Math.floor(Math.random()*5))+'ms';
+  document.getElementById('threats').textContent = (1247+Math.floor(Math.random()*10)).toLocaleString();
+  document.getElementById('agents').textContent = 84+Math.floor(Math.random()*3);
+  document.getElementById('workflows').textContent = (3412+Math.floor(Math.random()*20)).toLocaleString();
+},3000);
+
+const term = document.getElementById('terminal');
+const input = document.getElementById('cmdInput');
+const commands = {
+  help:"Available: status, deploy, scan, agents, nexus, clear",
+  status:"✓ Nexus Network: 6 regions online
+✓ Vector AI Core: OPERATIONAL (98.7%)
+✓ Security: SOC2/ISO27001 compliant
+✓ Uptime: 99.99% - 47 days",
+  deploy:"Deploying autonomous workflow...
+→ Singapore: OK
+→ Frankfurt: OK
+→ Chaiyaphum (origin): OK
+Deployment complete.",
+  scan:"Scanning global infrastructure...
+Threats: 0 active
+Latency: 12ms avg
+Edge nodes: 84/84 healthy",
+  agents:"84 autonomous agents active
+- 32 workflow optimizers
+- 28 threat hunters
+- 24 data analyzers",
+  nexus:"GLOBAL NEXUS STATUS
+SF • FRA • SIN • TYO • SYD • BKK
+All regions synchronized"
+};
+input.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    const cmd = input.value.trim().toLowerCase();
+    const line = document.createElement('div');
+    line.className='terminal-line';
+    line.innerHTML=`<span class="prompt">shikhor@nexus:~$</span> ${cmd}`;
+    term.appendChild(line);
+    const out = document.createElement('div');
+    out.className='terminal-line';
+    out.style.color='#7a8aa0';
+    out.textContent = commands[cmd] || `Command not found: ${cmd}`;
+    term.appendChild(out);
+    term.scrollTop = term.scrollHeight;
+    input.value='';
+    if(cmd==='clear'){term.innerHTML='';}
+  }
+});
+</script>
+
+
+</body></html>
