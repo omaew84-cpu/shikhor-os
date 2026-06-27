@@ -2,14 +2,14 @@
 
 > AI-Native Platform Ecosystem • 10-20 Year Blueprint • Platform for Creating Platforms
 
-![Version](https://img.shields.io/badge/version-2070-blue)
+![Version](https://img.shields.io/badge/version-2026-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Architecture](https://img.shields.io/badge/architecture-singularity-purple)
 ![Status](https://img.shields.io/badge/status-active-success)
 
 ## 🌌 Live Demo
 
-**👉 [https://omaewaf4cpu.github.io/shikhor-os](https://omaewaf4cpu.github.io/shikhor-os)**
+**👉 [https://omaew84-cpu.github.io/shikhor-os/](https://omaew84-cpu.github.io/shikhor-os/)**
 
 *Open `index.html` for interactive blueprint*
 
@@ -53,7 +53,7 @@ Quantum Fabric, Internet of Everything, Autonomous Ops, Space Ops, Industrial Pl
 ## 🛠️ Quick Start
 
 ```bash
-git clone https://github.com/omaewAF4cpu/shikhor-os.git
+git clone https://github.com/omaew84-cpu/shikhor-os.git
 cd shikhor-os
 # Open index.html or serve:
 python -m http.server 8000
