@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SHIKHOR ORIGIN</title>
+<style>
+body{background:#000;color:#e2e8f0;font-family:'JetBrains Mono',monospace;margin:0;padding:20px}
+h1{color:#8b5cf6;text-align:center}
+.card{background:#111827;border:1px solid #8b5cf633;border-radius:12px;padding:16px;margin:12px 0}
+.stat{display:inline-block;width:48%;margin:1%;text-align:center}
+.stat b{font-size:24px;color:#00ff88;display:block}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{padding:8px;border-bottom:1px solid #222;text-align:left;font-size:13px}
+button{background:#8b5cf6;color:#000;border:none;padding:8px 12px;border-radius:6px;margin:4px;cursor:pointer;font-weight:bold}
+footer{opacity:.6;text-align:center;margin-top:30px;font-size:11px}
+</style>
+</head>
+<body>
+<h1>● SHIKHOR ORIGIN DASHBOARD</h1>
+
+<div class="card">
+  <div class="stat"><b id="total">0</b>คลิกทั้งหมด</div>
+  <div class="stat"><b id="unique">0</b>module</div>
+  <div class="stat"><b id="today">0</b>วันนี้</div>
+  <div class="stat"><b id="last">-</b>ล่าสุด</div>
+</div>
+
+<div class="card">
+  <b>Log ล่าสุด</b>
+  <table id="log"><tr><th>เวลา</th><th>Module</th></tr></table>
+  <button onclick="clearLog()">ล้าง log</button>
+  <button onclick="location.reload()">รีเฟรช</button>
+</div>
+
+<footer>Created by Maew Maew Ooh © <span id="y"></span></footer>
+
+<script>
+const K='shikhor_origin_v1';
+function load(){
+  const d=JSON.parse(localStorage.getItem(K)||'[]');
+  document.getElementById('total').textContent=d.length;
+  document.getElementById('unique').textContent=[...new Set(d.map(x=>x.m))].length;
+  const t=new Date().toDateString();
+  document.getElementById('today').textContent=d.filter(x=>new Date(x.t).toDateString()===t).length;
+  document.getElementById('last').textContent=d[0]?new Date(d[0].t).toLocaleTimeString('th-TH'):'-';
+  const tb=document.getElementById('log');
+  tb.innerHTML='<tr><th>เวลา</th><th>Module</th></tr>';
+  d.slice(0,20).forEach(x=>{
+    const r=tb.insertRow();
+    r.innerHTML=`<td>${new Date(x.t).toLocaleString('th-TH')}</td><td>${x.m}</td>`;
+  });
+}
+function clearLog(){localStorage.removeItem(K);load()}
+document.getElementById('y').textContent=new Date().getFullYear();
+load();setInterval(load,2000);
+</script>
+</body>
+</html>
