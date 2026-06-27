@@ -1018,7 +1018,36 @@ document.getElementById('theme-toggle').onclick = ()=>{
   document.body.style.color = isLight ? '#000' : '#fff';
 };
 </script>
+<!-- Origin Engine - Real Logging -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+  const firebaseConfig = {
+    apiKey: "AIzaSyXXXX-REPLACE",
+    authDomain: "shikhor-omega.firebaseapp.com",
+    projectId: "shikhor-omega",
+    storageBucket: "shikhor-omega.appspot.com",
+    messagingSenderId: "000000000",
+    appId: "1:000000:web:xxxx"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  document.addEventListener('click', async (e) => {
+    const card = e.target.closest('[data-module], .module, h3, h4');
+    if (!card) return;
+    const name = card.textContent.trim().slice(0,50);
+    try {
+      await addDoc(collection(db, "origin_logs"), {
+        module: name,
+        timestamp: serverTimestamp(),
+        ua: navigator.userAgent.slice(0,80)
+      });
+    } catch {}
+  });
+</script>
 </body><!-- Owner Credit - Auto Year -->
 <div style="position:fixed;bottom:12px;right:16px;display:flex;align-items:center;gap:6px;opacity:0.75;font-family:'JetBrains Mono',monospace;font-size:11px;color:#bbb;z-index:9999;backdrop-filter:blur(2px);padding:4px 8px;border-radius:6px;background:rgba(0,0,0,0.3);">
   <img src="logo.png" alt="SHIKHOR" style="width:16px;height:16px;border-radius:3px;">
