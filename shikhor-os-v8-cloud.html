@@ -1,0 +1,363 @@
+<html lang="th"><head>
+<!-- Playables SDK -->
+<script>// Playables SDK v1.0.0
+// Game lifecycle bridge: rAF-based game-ready detection + event communication
+(function() {
+  'use strict';
+
+  // Idempotency: skip if already initialized (e.g., server-side injection
+  // followed by client-side inject-javascript via the Bloks webview component).
+  if (window.playablesSDK) return;
+
+  var HANDLER_NAME = 'playablesGameEventHandler';
+  var ANDROID_BRIDGE_NAME = '_MetaPlayablesBridge';
+  var RAF_FRAME_THRESHOLD = 3;
+
+  var gameReadySent = false;
+  var firstInteractionSent = false;
+  var errorSent = false;
+  var frameCount = 0;
+  var originalRAF = window.requestAnimationFrame;
+
+  // --- Transport Layer ---
+
+  function hasIOSBridge() {
+    return !!(window.webkit &&
+              window.webkit.messageHandlers &&
+              window.webkit.messageHandlers[HANDLER_NAME]);
+  }
+
+  function hasAndroidBridge() {
+    return !!(window[ANDROID_BRIDGE_NAME] &&
+              typeof window[ANDROID_BRIDGE_NAME].postEvent === 'function');
+  }
+
+  function isInIframe() {
+    return !!(window.parent && window.parent !== window);
+  }
+
+  function sendEvent(eventName, payload) {
+    var message = {
+      type: eventName,
+      payload: payload || {},
+      timestamp: Date.now()
+    };
+
+    if (hasIOSBridge()) {
+      try {
+        window.webkit.messageHandlers[HANDLER_NAME].postMessage(message);
+      } catch (e) { /* ignore */ }
+      return;
+    }
+
+    if (hasAndroidBridge()) {
+    try {
+      var p = payload || {};
+      p.__secureToken = window.__fbAndroidBridgeAuthToken || '';
+      p.timestamp = message.timestamp;
+      window[ANDROID_BRIDGE_NAME].postEvent(
+        eventName,
+        JSON.stringify(p)
+      );
+    } catch (e) { /* ignore */ }
+    return;
+  }
+
+    if (isInIframe()) {
+      try {
+        window.parent.postMessage(message, '*');
+      } catch (e) { /* ignore */ }
+      return;
+    }
+  }
+
+  // --- rAF Game-Ready Detection ---
+
+  function onFrame() {
+    if (gameReadySent) return;
+
+    frameCount++;
+    if (frameCount >= RAF_FRAME_THRESHOLD) {
+      gameReadySent = true;
+      sendEvent('game_ready', {
+        frame_count: frameCount,
+        detected_at: Date.now()
+      });
+      return;
+    }
+
+    originalRAF.call(window, onFrame);
+  }
+
+  if (originalRAF) {
+    window.requestAnimationFrame = function(callback) {
+      if (!gameReadySent) {
+        return originalRAF.call(window, function(timestamp) {
+          frameCount++;
+          if (frameCount >= RAF_FRAME_THRESHOLD && !gameReadySent) {
+            gameReadySent = true;
+            sendEvent('game_ready', {
+              frame_count: frameCount,
+              detected_at: Date.now()
+            });
+          }
+          callback(timestamp);
+        });
+      }
+      return originalRAF.call(window, callback);
+    };
+  }
+
+  // --- First User Interaction Detection ---
+
+  function setupFirstInteractionDetection() {
+    var events = ['touchstart', 'mousedown', 'keydown'];
+
+    function onFirstInteraction() {
+      if (firstInteractionSent) return;
+      firstInteractionSent = true;
+      sendEvent('user_interaction_start', null);
+
+      for (var i = 0; i < events.length; i++) {
+        document.removeEventListener(events[i], onFirstInteraction, true);
+      }
+    }
+
+    for (var i = 0; i < events.length; i++) {
+      document.addEventListener(events[i], onFirstInteraction, true);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupFirstInteractionDetection);
+  } else {
+    setupFirstInteractionDetection();
+  }
+
+  // --- Auto Error Capture ---
+
+  window.addEventListener('error', function(event) {
+    if (errorSent) return;
+    errorSent = true;
+    sendEvent('error', {
+      message: event.message || 'Unknown error',
+      source: event.filename || '',
+      lineno: event.lineno || 0,
+      colno: event.colno || 0,
+      auto_captured: true
+    });
+  });
+
+  window.addEventListener('unhandledrejection', function(event) {
+    if (errorSent) return;
+    errorSent = true;
+    var reason = event.reason;
+    sendEvent('error', {
+      message: (reason instanceof Error) ? reason.message : String(reason),
+      type: 'unhandled_promise_rejection',
+      auto_captured: true
+    });
+  });
+
+  // --- Public API ---
+
+  window.playablesSDK = {
+    complete: function(score) {
+      sendEvent('game_ended', {
+        score: score,
+        completed: true
+      });
+    },
+
+    error: function(message) {
+      if (errorSent) return;
+      errorSent = true;
+      sendEvent('error', {
+        message: message || 'Unknown error',
+        auto_captured: false
+      });
+    },
+
+    sendEvent: function(eventName, payload) {
+      if (!eventName || typeof eventName !== 'string') return;
+      sendEvent(eventName, payload);
+    }
+  };
+
+  // Kick off rAF detection in case no game code calls rAF immediately
+  if (originalRAF) {
+    originalRAF.call(window, onFrame);
+  }
+})();</script>
+<!-- PLAYABLE_TOUCH_PATCH_V1 --><script>
+(function() {
+  if (window.__playableTouchPatchInstalled) return;
+  window.__playableTouchPatchInstalled = true;
+  var origAdd = EventTarget.prototype.addEventListener;
+  var blockedTypes = { touchstart: 1, touchmove: 1, wheel: 1 };
+  EventTarget.prototype.addEventListener = function(type, listener, options) {
+    if (blockedTypes[type]) {
+      if (options === undefined || options === null) {
+        options = { passive: true };
+      } else if (typeof options === 'boolean') {
+        options = { capture: options, passive: true };
+      } else {
+        options = Object.assign({}, options, { passive: true });
+      }
+    }
+    return origAdd.call(this, type, listener, options);
+  };
+})();
+</script><script>window.Intl=window.Intl||{};Intl.t=function(s){return(Intl._locale&&Intl._locale[s])||s;};</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>SHIKHOR OS v8 Cloud</title>
+<style>
+:root{--bg:#0a0f1c;--card:#111a2e;--accent:#3b82f6;--text:#e2e8f0}
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui}
+body{background:var(--bg);color:var(--text);height:100vh;overflow:hidden;display:flex;flex-direction:column}
+header{padding:12px 16px;background:#0f172a;display:flex;justify-content:space-between;align-items:center}
+header h1{font-size:18px}
+#status{font-size:12px;padding:4px 8px;border-radius:12px;background:#1e293b}
+#status.online{background:#065f46;color:#a7f3d0}
+#status.offline{background:#7f1d1d;color:#fecaca}
+main{flex:1;display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;padding:16px;overflow:auto}
+.tile{background:var(--card);border-radius:16px;padding:16px;text-align:center;cursor:pointer;transition:.2s;box-shadow:0 4px 12px #0004}
+.tile:hover{transform:translateY(-2px);background:#1e293b}
+.tile span{font-size:32px;display:block;margin-bottom:8px}
+.modal{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;z-index:99}
+.modal.active{display:flex}
+.panel{background:var(--card);width:92%;max-width:480px;max-height:85vh;border-radius:20px;display:flex;flex-direction:column;overflow:hidden}
+.panel header{padding:12px 16px;background:#1e293b}
+.panel .content{padding:16px;overflow:auto;flex:1}
+input,textarea,button{width:100%;padding:10px;margin:6px 0;border:none;border-radius:8px;background:#0f172a;color:var(--text)}
+button{background:var(--accent);cursor:pointer;font-weight:600}
+.note,.task{background:#0f172a;padding:10px;border-radius:8px;margin:6px 0;display:flex;justify-content:space-between;align-items:center}
+.small{font-size:11px;opacity:.7}
+</style>
+</head>
+<body>
+<header>
+  <h1>SHIKHOR OS v8</h1>
+  <div id="status" class="online">Online • Synced</div>
+</header>
+<main>
+  <div class="tile" onclick="openApp('notes')"><span>📝</span>Notes</div>
+  <div class="tile" onclick="openApp('tasks')"><span>✅</span>Tasks</div>
+  <div class="tile" onclick="openApp('files')"><span>📁</span>Files</div>
+  <div class="tile" onclick="openApp('cloud')"><span>☁️</span>Cloud</div>
+</main>
+
+<div id="modal" class="modal" onclick="if(event.target.id==='modal')closeApp()">
+  <div class="panel">
+    <header><span id="appTitle">CLOUD</span><button style="width:auto;padding:4px 8px;float:right;background:#334155" onclick="closeApp()">✕</button></header>
+    <div class="content" id="appContent">
+  <div style="line-height:1.6">
+    <b>สถานะคลาวด์:</b> <span style="color:#10b981">เชื่อมต่อแล้ว</span><br><br>
+    ข้อมูล Notes และ Tasks จะซิงค์อัตโนมัติทุกเครื่อง
+    <div class="small">Database: shikhor-os / Firestore / Bangkok</div>
+  </div></div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// ==== ใส่ค่า config ของคุณตรงนี้ ====
+// ไปที่ Firebase Console > Project settings > General > Your apps > SDK setup
+const firebaseConfig = {
+  apiKey: "AIzaSyXXXX-REPLACE-WITH-YOURS",
+  authDomain: "shikhor-os.firebaseapp.com",
+  projectId: "shikhor-os",
+  storageBucket: "shikhor-os.appspot.com",
+  messagingSenderId: "REPLACE",
+  appId: "REPLACE"
+};
+// =================================
+
+let db, cloudEnabled=false;
+const statusEl=document.getElementById('status');
+
+try{
+  const app=initializeApp(firebaseConfig);
+  db=getFirestore(app);
+  cloudEnabled=true;
+  statusEl.textContent="Online • Synced";
+  statusEl.className="online";
+  // realtime listeners
+  onSnapshot(collection(db,"shikhor","user","notes"),snap=>{
+    notes=Array.from(snap.docs.map(d=>({id:d.id,...d.data()})));
+    if(currentApp==='notes')renderNotes();
+  });
+  onSnapshot(collection(db,"shikhor","user","tasks"),snap=>{
+    tasks=Array.from(snap.docs.map(d=>({id:d.id,...d.data()})));
+    if(currentApp==='tasks')renderTasks();
+  });
+}catch(e){
+  console.warn("Firebase not configured, using local only",e);
+  statusEl.textContent="Offline • Local";
+  statusEl.className="offline";
+}
+
+// local fallback
+let notes=JSON.parse(localStorage.getItem('sk_notes')||'[]');
+let tasks=JSON.parse(localStorage.getItem('sk_tasks')||'[]');
+function saveLocal(){localStorage.setItem('sk_notes',JSON.stringify(notes));localStorage.setItem('sk_tasks',JSON.stringify(tasks));}
+
+let currentApp='';
+window.openApp=(name)=>{currentApp=name;document.getElementById('modal').classList.add('active');document.getElementById('appTitle').textContent=name.toUpperCase();if(name==='notes')renderNotes();if(name==='tasks')renderTasks();if(name==='files')renderFiles();if(name==='cloud')renderCloud();}
+window.closeApp=()=>document.getElementById('modal').classList.remove('active');
+
+function renderNotes(){
+  const c=document.getElementById('appContent');
+  c.innerHTML=`<input id="nTitle" placeholder="หัวข้อ"><textarea id="nBody" rows="4" placeholder="เนื้อหา"></textarea><button onclick="addNote()">บันทึก Note</button><div id="nList"></div>`;
+  updateNoteList();
+}
+window.addNote=async ()=>{
+  const t=document.getElementById('nTitle').value.trim(),b=document.getElementById('nBody').value.trim();
+  if(!t&&!b)return;
+  const id=Date.now().toString();
+  const data={title:t,body:b,updated:Date.now()};
+  notes.unshift({id,...data});saveLocal();updateNoteList();
+  if(cloudEnabled)await setDoc(doc(db,"shikhor","user","notes",id),{...data,ts:serverTimestamp()});
+  document.getElementById('nTitle').value='';document.getElementById('nBody').value='';
+};
+function updateNoteList(){
+  const l=document.getElementById('nList');if(!l)return;
+  l.innerHTML=notes.map(n=>`<div class="note"><div><b>${n.title||'(ไม่มีชื่อ)'}</b><div class="small">${n.body||''}</div></div><button style="width:auto;background:#dc2626" onclick="delNote('${n.id}')">ลบ</button></div>`).join('')||'<div class="small">ยังไม่มี note</div>';
+}
+window.delNote=async id=>{notes=notes.filter(n=>n.id!==id);saveLocal();updateNoteList();if(cloudEnabled)await deleteDoc(doc(db,"shikhor","user","notes",id));};
+
+function renderTasks(){
+  const c=document.getElementById('appContent');
+  c.innerHTML=`<input id="tText" placeholder="งานใหม่"><button onclick="addTask()">เพิ่ม</button><div id="tList"></div>`;
+  updateTaskList();
+}
+window.addTask=async ()=>{
+  const txt=document.getElementById('tText').value.trim();if(!txt)return;
+  const id=Date.now().toString();const data={text:txt,done:false,updated:Date.now()};
+  tasks.unshift({id,...data});saveLocal();updateTaskList();
+  if(cloudEnabled)await setDoc(doc(db,"shikhor","user","tasks",id),{...data,ts:serverTimestamp()});
+  document.getElementById('tText').value='';
+};
+function updateTaskList(){
+  const l=document.getElementById('tList');if(!l)return;
+  l.innerHTML=tasks.map(t=>`<div class="task"><div><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}')"> ${t.text}</div><button style="width:auto;background:#dc2626" onclick="delTask('${t.id}')">ลบ</button></div>`).join('')||'<div class="small">ยังไม่มี task</div>';
+}
+window.toggleTask=async id=>{const t=tasks.find(x=>x.id===id);t.done=!t.done;saveLocal();updateTaskList();if(cloudEnabled)await setDoc(doc(db,"shikhor","user","tasks",id),{...t,ts:serverTimestamp()});};
+window.delTask=async id=>{tasks=tasks.filter(x=>x.id!==id);saveLocal();updateTaskList();if(cloudEnabled)await deleteDoc(doc(db,"shikhor","user","tasks",id));};
+
+function renderFiles(){document.getElementById('appContent').innerHTML=`<div class="small">Files ยังใช้ local storage ใน v8</div>`;}
+function renderCloud(){
+  document.getElementById('appContent').innerHTML=`
+  <div style="line-height:1.6">
+    <b>สถานะคลาวด์:</b> ${cloudEnabled?'<span style="color:#10b981">เชื่อมต่อแล้ว</span>':'<span style="color:#f87171">ยังไม่ได้ตั้งค่า</span>'}<br><br>
+    ${cloudEnabled?'ข้อมูล Notes และ Tasks จะซิงค์อัตโนมัติทุกเครื่อง':'<ol><li>ไปที่ Firebase Console > Project settings</li><li>คัดลอก apiKey, messagingSenderId, appId</li><li>เปิดไฟล์นี้ใน GitHub แก้บรรทัด firebaseConfig</li><li>Commit แล้วรีเฟรช</li></ol>'}
+    <div class="small">Database: shikhor-os / Firestore / Bangkok</div>
+  </div>`;
+}
+</script>
+
+
+</body></html>
