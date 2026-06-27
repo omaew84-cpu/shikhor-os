@@ -1,0 +1,773 @@
+<html lang="th"><head>
+<!-- Playables SDK -->
+<script>// Playables SDK v1.0.0
+// Game lifecycle bridge: rAF-based game-ready detection + event communication
+(function() {
+  'use strict';
+
+  // Idempotency: skip if already initialized (e.g., server-side injection
+  // followed by client-side inject-javascript via the Bloks webview component).
+  if (window.playablesSDK) return;
+
+  var HANDLER_NAME = 'playablesGameEventHandler';
+  var ANDROID_BRIDGE_NAME = '_MetaPlayablesBridge';
+  var RAF_FRAME_THRESHOLD = 3;
+
+  var gameReadySent = false;
+  var firstInteractionSent = false;
+  var errorSent = false;
+  var frameCount = 0;
+  var originalRAF = window.requestAnimationFrame;
+
+  // --- Transport Layer ---
+
+  function hasIOSBridge() {
+    return !!(window.webkit &&
+              window.webkit.messageHandlers &&
+              window.webkit.messageHandlers[HANDLER_NAME]);
+  }
+
+  function hasAndroidBridge() {
+    return !!(window[ANDROID_BRIDGE_NAME] &&
+              typeof window[ANDROID_BRIDGE_NAME].postEvent === 'function');
+  }
+
+  function isInIframe() {
+    return !!(window.parent && window.parent !== window);
+  }
+
+  function sendEvent(eventName, payload) {
+    var message = {
+      type: eventName,
+      payload: payload || {},
+      timestamp: Date.now()
+    };
+
+    if (hasIOSBridge()) {
+      try {
+        window.webkit.messageHandlers[HANDLER_NAME].postMessage(message);
+      } catch (e) { /* ignore */ }
+      return;
+    }
+
+    if (hasAndroidBridge()) {
+    try {
+      var p = payload || {};
+      p.__secureToken = window.__fbAndroidBridgeAuthToken || '';
+      p.timestamp = message.timestamp;
+      window[ANDROID_BRIDGE_NAME].postEvent(
+        eventName,
+        JSON.stringify(p)
+      );
+    } catch (e) { /* ignore */ }
+    return;
+  }
+
+    if (isInIframe()) {
+      try {
+        window.parent.postMessage(message, '*');
+      } catch (e) { /* ignore */ }
+      return;
+    }
+  }
+
+  // --- rAF Game-Ready Detection ---
+
+  function onFrame() {
+    if (gameReadySent) return;
+
+    frameCount++;
+    if (frameCount >= RAF_FRAME_THRESHOLD) {
+      gameReadySent = true;
+      sendEvent('game_ready', {
+        frame_count: frameCount,
+        detected_at: Date.now()
+      });
+      return;
+    }
+
+    originalRAF.call(window, onFrame);
+  }
+
+  if (originalRAF) {
+    window.requestAnimationFrame = function(callback) {
+      if (!gameReadySent) {
+        return originalRAF.call(window, function(timestamp) {
+          frameCount++;
+          if (frameCount >= RAF_FRAME_THRESHOLD && !gameReadySent) {
+            gameReadySent = true;
+            sendEvent('game_ready', {
+              frame_count: frameCount,
+              detected_at: Date.now()
+            });
+          }
+          callback(timestamp);
+        });
+      }
+      return originalRAF.call(window, callback);
+    };
+  }
+
+  // --- First User Interaction Detection ---
+
+  function setupFirstInteractionDetection() {
+    var events = ['touchstart', 'mousedown', 'keydown'];
+
+    function onFirstInteraction() {
+      if (firstInteractionSent) return;
+      firstInteractionSent = true;
+      sendEvent('user_interaction_start', null);
+
+      for (var i = 0; i < events.length; i++) {
+        document.removeEventListener(events[i], onFirstInteraction, true);
+      }
+    }
+
+    for (var i = 0; i < events.length; i++) {
+      document.addEventListener(events[i], onFirstInteraction, true);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupFirstInteractionDetection);
+  } else {
+    setupFirstInteractionDetection();
+  }
+
+  // --- Auto Error Capture ---
+
+  window.addEventListener('error', function(event) {
+    if (errorSent) return;
+    errorSent = true;
+    sendEvent('error', {
+      message: event.message || 'Unknown error',
+      source: event.filename || '',
+      lineno: event.lineno || 0,
+      colno: event.colno || 0,
+      auto_captured: true
+    });
+  });
+
+  window.addEventListener('unhandledrejection', function(event) {
+    if (errorSent) return;
+    errorSent = true;
+    var reason = event.reason;
+    sendEvent('error', {
+      message: (reason instanceof Error) ? reason.message : String(reason),
+      type: 'unhandled_promise_rejection',
+      auto_captured: true
+    });
+  });
+
+  // --- Public API ---
+
+  window.playablesSDK = {
+    complete: function(score) {
+      sendEvent('game_ended', {
+        score: score,
+        completed: true
+      });
+    },
+
+    error: function(message) {
+      if (errorSent) return;
+      errorSent = true;
+      sendEvent('error', {
+        message: message || 'Unknown error',
+        auto_captured: false
+      });
+    },
+
+    sendEvent: function(eventName, payload) {
+      if (!eventName || typeof eventName !== 'string') return;
+      sendEvent(eventName, payload);
+    }
+  };
+
+  // Kick off rAF detection in case no game code calls rAF immediately
+  if (originalRAF) {
+    originalRAF.call(window, onFrame);
+  }
+})();</script>
+<!-- PLAYABLE_TOUCH_PATCH_V1 --><script>
+(function() {
+  if (window.__playableTouchPatchInstalled) return;
+  window.__playableTouchPatchInstalled = true;
+  var origAdd = EventTarget.prototype.addEventListener;
+  var blockedTypes = { touchstart: 1, touchmove: 1, wheel: 1 };
+  EventTarget.prototype.addEventListener = function(type, listener, options) {
+    if (blockedTypes[type]) {
+      if (options === undefined || options === null) {
+        options = { passive: true };
+      } else if (typeof options === 'boolean') {
+        options = { capture: options, passive: true };
+      } else {
+        options = Object.assign({}, options, { passive: true });
+      }
+    }
+    return origAdd.call(this, type, listener, options);
+  };
+})();
+</script><script>window.Intl=window.Intl||{};Intl.t=function(s){return(Intl._locale&&Intl._locale[s])||s;};</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>SHIKHOR OS v25 — Autonomous AI OS X by Maew Maew Ooh</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.2.0/remixicon.min.css">
+<script>
+tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['"Satoshi"','"Noto Sans Thai"', 'system-ui'] } } } }
+</script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+:root {
+  --primary: #8b5cf6;
+  --accent: #06b6d4;
+  --glass: rgba(15,15,25,0.6);
+  --glass-2: rgba(255,255,255,0.08);
+}
+* { -webkit-font-smoothing: antialiased; }
+body { font-family: "Space Grotesk", "Noto Sans Thai", system-ui; background:#000; overscroll-behavior: none; }
+.liquid-glass {
+  background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
+  backdrop-filter: blur(40px) saturate(180%) contrast(110%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%) contrast(110%);
+  border: 1px solid rgba(255,255,255,0.18);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.2), 0 20px 40px rgba(0,0,0,0.4);
+}
+.liquid-glass-2 {
+  background: radial-gradient(120% 120% at 50% 0%, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.06) 40%, rgba(255,255,255,0.02) 100%);
+  backdrop-filter: blur(60px) saturate(200%);
+  -webkit-backdrop-filter: blur(60px) saturate(200%);
+  border: 1px solid rgba(255,255,255,0.15);
+  position: relative;
+}
+.liquid-glass-2::before {
+  content:''; position:absolute; inset:0; border-radius:inherit;
+  background: linear-gradient(110deg, transparent 20%, rgba(255,255,255,0.3) 48%, transparent 52%);
+  mix-blend-mode: overlay; pointer-events:none;
+}
+.spatial { transform-style: preserve-3d; perspective: 2000px; }
+.window { transform: translateZ(0); transition: transform 0.5s cubic-bezier(.2,.8,.2,1), opacity .3s; }
+.window.active { transform: translateZ(80px) scale(1.02); }
+.mode-3d .window { transform: rotateY(var(--ry,0deg)) rotateX(5deg) translateZ(var(--tz,0px)); }
+.mode-3d #desktop { transform: rotateX(25deg) translateZ(-200px); transform-style: preserve-3d; }
+#ray { position:fixed; inset:0; z-index:0; }
+.scan { background: linear-gradient(transparent, rgba(139,92,246,0.1), transparent); height:200%; animation: scan 8s linear infinite; }
+@keyframes scan { to { transform: translateY(50%); } }
+.shimmer { position:relative; overflow:hidden; }
+.shimmer::after { content:''; position:absolute; inset:-200%; background: conic-gradient(from 0deg, transparent 0 80%, rgba(255,255,255,0.2) 90%, transparent 100%); animation: spin 4s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.no-scrollbar::-webkit-scrollbar { display:none; }
+.dynamic-island { transition: all .5s cubic-bezier(.2,.8,.2,1); }
+.cursor-collab { position:absolute; transition: all .2s linear; pointer-events:none; z-index:9999; }
+</style>
+<style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:"Satoshi", "Noto Sans Thai", system-ui;font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.pointer-events-none{pointer-events:none}.fixed{position:fixed}.absolute{position:absolute}.relative{position:relative}.inset-0{inset:0px}.bottom-3{bottom:0.75rem}.bottom-\[90px\]{bottom:90px}.left-1\/2{left:50%}.right-4{right:1rem}.top-20{top:5rem}.top-3{top:0.75rem}.z-\[900\]{z-index:900}.z-\[999\]{z-index:999}.z-10{z-index:10}.z-\[400\]{z-index:400}.z-\[450\]{z-index:450}.z-\[500\]{z-index:500}.z-\[9999\]{z-index:9999}.mx-1{margin-left:0.25rem;margin-right:0.25rem}.mx-auto{margin-left:auto;margin-right:auto}.mb-6{margin-bottom:1.5rem}.mt-1{margin-top:0.25rem}.mt-3{margin-top:0.75rem}.mt-8{margin-top:2rem}.-mt-0\.5{margin-top:-0.125rem}.-mt-1{margin-top:-0.25rem}.mb-1{margin-bottom:0.25rem}.mb-3{margin-bottom:0.75rem}.mb-4{margin-bottom:1rem}.mt-16{margin-top:4rem}.mt-4{margin-top:1rem}.mt-6{margin-top:1.5rem}.mt-auto{margin-top:auto}.block{display:block}.flex{display:flex}.grid{display:grid}.hidden{display:none}.h-1{height:0.25rem}.h-24{height:6rem}.h-full{height:100%}.h-11{height:2.75rem}.h-12{height:3rem}.h-2{height:0.5rem}.h-8{height:2rem}.h-9{height:2.25rem}.h-\[68px\]{height:68px}.max-h-\[380px\]{max-height:380px}.min-h-\[520px\]{min-height:520px}.w-0{width:0px}.w-24{width:6rem}.w-64{width:16rem}.w-full{width:100%}.w-11{width:2.75rem}.w-12{width:3rem}.w-2{width:0.5rem}.w-9{width:2.25rem}.w-\[320px\]{width:320px}.w-\[340px\]{width:340px}.w-\[min\(920px\2c 95vw\)\]{width:min(920px,95vw)}.w-px{width:1px}.max-w-6xl{max-width:72rem}.max-w-7xl{max-width:80rem}.max-w-\[95vw\]{max-width:95vw}.max-w-md{max-width:28rem}.-translate-x-1\/2{--tw-translate-x:-50%;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}@keyframes pulse{50%{opacity:.5}}.animate-pulse{animation:pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite}.cursor-pointer{cursor:pointer}.select-none{-webkit-user-select:none;user-select:none}.grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.flex-col{flex-direction:column}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-1{gap:0.25rem}.gap-1\.5{gap:0.375rem}.gap-2{gap:0.5rem}.gap-3{gap:0.75rem}.gap-4{gap:1rem}.gap-6{gap:1.5rem}.space-y-2 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.5rem * var(--tw-space-y-reverse))}.overflow-hidden{overflow:hidden}.overflow-x-auto{overflow-x:auto}.overflow-y-auto{overflow-y:auto}.rounded-\[28px\]{border-radius:28px}.rounded-full{border-radius:9999px}.rounded-2xl{border-radius:1rem}.rounded-\[32px\]{border-radius:32px}.rounded-\[40px\]{border-radius:40px}.rounded-lg{border-radius:0.5rem}.rounded-xl{border-radius:0.75rem}.border-t{border-top-width:1px}.border-white\/10{border-color:rgb(255 255 255 / 0.1)}.bg-black{--tw-bg-opacity:1;background-color:rgb(0 0 0 / var(--tw-bg-opacity, 1))}.bg-white\/10{background-color:rgb(255 255 255 / 0.1)}.bg-black\/70{background-color:rgb(0 0 0 / 0.7)}.bg-green-400{--tw-bg-opacity:1;background-color:rgb(74 222 128 / var(--tw-bg-opacity, 1))}.bg-green-500{--tw-bg-opacity:1;background-color:rgb(34 197 94 / var(--tw-bg-opacity, 1))}.bg-violet-500\/20{background-color:rgb(139 92 246 / 0.2)}.bg-white\/5{background-color:rgb(255 255 255 / 0.05)}.bg-gradient-to-r{background-image:linear-gradient(to right, var(--tw-gradient-stops))}.from-violet-500{--tw-gradient-from:#8b5cf6 var(--tw-gradient-from-position);--tw-gradient-to:rgb(139 92 246 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.to-cyan-400{--tw-gradient-to:#22d3ee var(--tw-gradient-to-position)}.object-cover{object-fit:cover}.p-4{padding:1rem}.p-10{padding:2.5rem}.p-2\.5{padding:0.625rem}.p-3{padding:0.75rem}.p-6{padding:1.5rem}.p-8{padding:2rem}.px-2{padding-left:0.5rem;padding-right:0.5rem}.px-3{padding-left:0.75rem;padding-right:0.75rem}.px-4{padding-left:1rem;padding-right:1rem}.py-1{padding-top:0.25rem;padding-bottom:0.25rem}.py-1\.5{padding-top:0.375rem;padding-bottom:0.375rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.py-3{padding-top:0.75rem;padding-bottom:0.75rem}.pb-24{padding-bottom:6rem}.pr-2{padding-right:0.5rem}.pt-16{padding-top:4rem}.pt-6{padding-top:1.5rem}.text-left{text-align:left}.font-mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}.text-2xl{font-size:1.5rem;line-height:2rem}.text-4xl{font-size:2.25rem;line-height:2.5rem}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xs{font-size:0.75rem;line-height:1rem}.text-5xl{font-size:3rem;line-height:1}.text-\[11px\]{font-size:11px}.text-xl{font-size:1.25rem;line-height:1.75rem}.font-semibold{font-weight:600}.font-light{font-weight:300}.font-medium{font-weight:500}.leading-tight{line-height:1.25}.tracking-wide{letter-spacing:0.025em}.tracking-wider{letter-spacing:0.05em}.text-white{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.text-violet-400{--tw-text-opacity:1;color:rgb(167 139 250 / var(--tw-text-opacity, 1))}.text-white\/50{color:rgb(255 255 255 / 0.5)}.text-white\/60{color:rgb(255 255 255 / 0.6)}.text-cyan-400{--tw-text-opacity:1;color:rgb(34 211 238 / var(--tw-text-opacity, 1))}.text-green-400{--tw-text-opacity:1;color:rgb(74 222 128 / var(--tw-text-opacity, 1))}.text-violet-200{--tw-text-opacity:1;color:rgb(221 214 254 / var(--tw-text-opacity, 1))}.text-white\/70{color:rgb(255 255 255 / 0.7)}.opacity-40{opacity:0.4}.opacity-\[0\.03\]{opacity:0.03}.shadow-2xl{--tw-shadow:0 25px 50px -12px rgb(0 0 0 / 0.25);--tw-shadow-colored:0 25px 50px -12px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.backdrop-blur-xl{--tw-backdrop-blur:blur(24px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition-all{transition-property:all;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition{transition-property:color, background-color, border-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-transform{transition-property:transform;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.duration-300{transition-duration:300ms}.duration-700{transition-duration:700ms}.hover\:bg-white\/10:hover{background-color:rgb(255 255 255 / 0.1)}.hover\:bg-white\/15:hover{background-color:rgb(255 255 255 / 0.15)}@media (min-width: 640px){.sm\:grid-cols-3{grid-template-columns:repeat(3, minmax(0, 1fr))}}@media (min-width: 768px){.md\:grid-cols-4{grid-template-columns:repeat(4, minmax(0, 1fr))}}@media (min-width: 1024px){.lg\:col-span-2{grid-column:span 2 / span 2}.lg\:col-span-3{grid-column:span 3 / span 3}.lg\:grid-cols-5{grid-template-columns:repeat(5, minmax(0, 1fr))}.lg\:grid-cols-6{grid-template-columns:repeat(6, minmax(0, 1fr))}}</style></head>
+<body class="bg-black text-white overflow-hidden select-none">
+<canvas id="ray" class="fixed inset-0"></canvas>
+<div class="scan fixed inset-0 opacity-[0.03] pointer-events-none"></div>
+
+<!-- BOOT -->
+<div id="boot" class="fixed inset-0 z-[999] bg-black flex flex-col items-center justify-center">
+  <div class="shimmer w-24 h-24 rounded-[28px] liquid-glass-2 flex items-center justify-center mb-6">
+    <i class="ri-sparkling-2-fill text-4xl text-violet-400"></i>
+  </div>
+  <h1 class="text-2xl font-semibold tracking-wide">SHIKHOR OS v25</h1>
+  <p class="text-sm text-white/60 mt-1">Autonomous AI OS X • by Maew Maew Ooh</p>
+  <div class="w-64 h-1 bg-white/10 rounded-full mt-8 overflow-hidden">
+    <div id="bootbar" class="h-full w-0 bg-gradient-to-r from-violet-500 to-cyan-400 transition-all duration-300"></div>
+  </div>
+  <p id="bootlog" class="text-xs text-white/50 mt-3 font-mono">Initializing Quantum UI...</p>
+</div>
+
+<!-- LOGIN -->
+<div id="login" class="fixed inset-0 z-[900] hidden items-center justify-center p-4">
+  <div class="absolute inset-0">
+    <video autoplay="" muted="" loop="" class="w-full h-full object-cover opacity-40" src="https://videos.pexels.com/video-files/18069234/18069234-uhd_2560_1440_24fps.mp4"></video>
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-xl"></div>
+  </div>
+  <div class="relative w-full max-w-6xl grid lg:grid-cols-5 gap-6">
+    <div class="lg:col-span-3 liquid-glass-2 rounded-[40px] p-10 flex flex-col justify-between min-h-[520px]">
+      <div>
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center"><i class="ri-brain-2-fill text-2xl text-violet-400"></i></div>
+          <div>
+            <h2 class="text-2xl font-semibold">SHIKHOR OS v25</h2>
+            <p class="text-xs text-white/60 -mt-1" data-th="ระบบปฏิบัติการ AI อัตโนมัติ" data-en="Autonomous AI Operating System">ระบบปฏิบัติการ AI อัตโนมัติ</p>
+          </div>
+        <div class="mt-16">
+          <h3 class="text-5xl font-light leading-tight" data-th="สวัสดีตอนเย็น,&lt;br&gt;เมียวเมียว" data-en="Good evening,&lt;br&gt;Maew Maew">สวัสดีตอนเย็น,<br>เมียวเมียว</h3>
+          <p class="mt-4 text-white/70 max-w-md" data-th="v25 รวม Developer, Enterprise, Quantum, Cloud และ Autonomous ในไฟล์เดียว" data-en="v25 merges Developer, Enterprise, Quantum, Cloud &amp; Autonomous in one file">v25 รวม Developer, Enterprise, Quantum, Cloud และ Autonomous ในไฟล์เดียว</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-4 text-xs text-white/50">
+        <span class="flex items-center gap-1"><i class="ri-shield-keyhole-fill text-green-400"></i> WebAuthn</span>
+        <span class="flex items-center gap-1"><i class="ri-fingerprint-fill text-cyan-400"></i> Biometric</span>
+        <span class="flex items-center gap-1"><i class="ri-cloud-off-fill text-violet-400"></i> Offline AI</span>
+      </div>
+    </div>
+    <div class="lg:col-span-2 liquid-glass rounded-[40px] p-8 flex flex-col">
+      <div class="flex justify-between items-center">
+        <h4 class="font-medium" data-th="เข้าสู่ระบบ" data-en="Sign In">เข้าสู่ระบบ</h4>
+        <div class="flex gap-2">
+          <button onclick="setLang('th')" class="px-2 py-1 rounded-lg bg-white/10 text-xs">TH</button>
+          <button onclick="setLang('en')" class="px-2 py-1 rounded-lg bg-white/5 text-xs">EN</button>
+        </div>
+      <div id="users" class="mt-6 space-y-2"></div>
+      <div class="grid grid-cols-2 gap-2 mt-4">
+        <button onclick="loginWithPasskey()" class="liquid-glass-2 rounded-2xl py-3 flex items-center justify-center gap-2 hover:bg-white/10 transition"><i class="ri-pass-valid-fill"></i><span data-th="Passkey" data-en="Passkey">Passkey</span></button>
+        <button onclick="loginSSO()" class="liquid-glass-2 rounded-2xl py-3 flex items-center justify-center gap-2 hover:bg-white/10 transition"><i class="ri-microsoft-fill"></i><span>SSO</span></button>
+      </div>
+      <div class="mt-auto pt-6 border-t border-white/10">
+        <div class="flex items-center justify-between text-xs text-white/50">
+          <span>RBAC • Audit Log • E2E</span>
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Secure Enclave</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- OS -->
+<div id="os" class="fixed inset-0 z-10 hidden spatial">
+  <!-- Dynamic Island -->
+  <div id="island" class="dynamic-island fixed top-3 left-1/2 -translate-x-1/2 z-[500] liquid-glass-2 rounded-full px-4 h-9 flex items-center gap-3 shadow-2xl cursor-pointer w-[320px] justify-between">
+    <div class="flex items-center gap-2">
+      <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+      <span id="island-time" class="text-xs font-medium tracking-wider">09:41</span>
+    </div>
+    <div class="flex items-center gap-3 text-[11px] text-white/70">
+      <span id="sync-status" class="flex items-center gap-1"><i class="ri-cloud-fill text-cyan-400"></i> Synced</span>
+      <span id="ai-status" class="flex items-center gap-1"><i class="ri-sparkling-fill text-violet-400"></i> Autonomous</span>
+      <span class="flex items-center gap-1"><i class="ri-battery-charge-fill text-green-400"></i> 100%</span>
+    </div>
+  </div>
+
+  <!-- Desktop -->
+  <div id="desktop" class="absolute inset-0 pt-16 pb-24 px-4 overflow-hidden transition-transform duration-700">
+    <div id="icon-grid" class="relative w-full h-full max-w-7xl mx-auto"></div>
+    <div id="cursors"></div>
+  </div>
+
+  <!-- Windows -->
+  <div id="windows" class="absolute inset-0 pointer-events-none"></div>
+
+  <!-- Taskbar -->
+  <div class="fixed bottom-3 left-1/2 -translate-x-1/2 z-[400] liquid-glass-2 rounded-[28px] px-3 h-[68px] flex items-center gap-2 shadow-2xl max-w-[95vw] overflow-x-auto no-scrollbar">
+    <button onclick="toggleStart()" class="w-11 h-11 rounded-2xl bg-white/10 hover:bg-white/15 flex items-center justify-center"><i class="ri-apps-2-fill text-xl"></i></button>
+    <div id="dock" class="flex items-center gap-1.5"></div>
+    <div class="w-px h-8 bg-white/10 mx-1"></div>
+    <button onclick="toggleQuick()" class="w-9 h-9 rounded-xl hover:bg-white/10 flex items-center justify-center"><i class="ri-settings-3-fill"></i></button>
+  </div>
+
+  <!-- Start Menu -->
+  <div id="start" class="fixed bottom-[90px] left-1/2 -translate-x-1/2 z-[450] w-[min(920px,95vw)] liquid-glass-2 rounded-[32px] p-6 shadow-2xl hidden">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h3 class="text-xl font-semibold">SHIKHOR OS v25</h3>
+        <p class="text-xs text-white/60 -mt-0.5">Autonomous • Quantum • Enterprise</p>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="setWorkspace('personal')" class="px-3 py-1.5 rounded-full bg-violet-500/20 text-violet-200 text-xs">Personal</button>
+        <button onclick="setWorkspace('team')" class="px-3 py-1.5 rounded-full bg-white/10 text-xs">Team</button>
+        <button onclick="setWorkspace('org')" class="px-3 py-1.5 rounded-full bg-white/10 text-xs">Org</button>
+      </div>
+    </div>
+    <div id="appgrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 max-h-[380px] overflow-y-auto no-scrollbar pr-2"></div>
+  </div>
+
+  <!-- Quick Settings -->
+  <div id="quick" class="fixed bottom-[90px] right-4 z-[450] w-[340px] liquid-glass-2 rounded-[28px] p-4 shadow-2xl hidden">
+    <div class="grid grid-cols-2 gap-2 mb-3">
+      <button onclick="toggle3D()" class="p-3 rounded-2xl bg-white/10 hover:bg-white/15 text-left"><i class="ri-cube-fill block mb-1"></i><span class="text-xs">3D Desktop</span></button>
+      <button onclick="togglePhysics()" class="p-3 rounded-2xl bg-white/10 hover:bg-white/15 text-left"><i class="ri-bubble-chart-fill block mb-1"></i><span class="text-xs">Physics</span></button>
+      <button onclick="toggleRay()" class="p-3 rounded-2xl bg-white/10 hover:bg-white/15 text-left"><i class="ri-sun-foggy-fill block mb-1"></i><span class="text-xs">Ray Tracing</span></button>
+      <button onclick="runOptimize()" class="p-3 rounded-2xl bg-white/10 hover:bg-white/15 text-left"><i class="ri-speed-up-fill block mb-1"></i><span class="text-xs">Optimize</span></button>
+    </div>
+    <div class="space-y-2 text-xs">
+      <div class="flex items-center justify-between p-2.5 rounded-xl bg-white/5"><span>E2E Encryption</span><input type="checkbox" checked="" onchange="toggleE2E(this)" class="toggle"></div>
+      <div class="flex items-center justify-between p-2.5 rounded-xl bg-white/5"><span>Edge Compute</span><input type="checkbox" checked="" onchange="toggleEdge(this)" class="toggle"></div>
+      <div class="flex items-center justify-between p-2.5 rounded-xl bg-white/5"><span>WebRTC P2P</span><input type="checkbox" checked="" class="toggle"></div>
+      <div class="flex items-center justify-between p-2.5 rounded-xl bg-white/5"><span>Offline AI</span><span class="text-green-400">Ready</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 z-[9999] hidden liquid-glass px-4 py-2 rounded-full text-sm"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/matter-js@0.20.0/build/matter.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/yjs@13.9.15/dist/yjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/alasql@4/dist/alasql.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/isomorphic-git@1.29.0/dist/bundle.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+
+<script>
+// ====== CORE STATE ======
+const $ = s => document.querySelector(s);
+const state = {
+  user: null, lang: 'th', windows: {}, z: 100,
+  workspace: 'personal', e2e: true, edge: true,
+  history: [], historyIndex: -1
+};
+const t = (th,en) => state.lang==='th'?th:en;
+function setLang(l){ state.lang=l; document.querySelectorAll('[data-th]').forEach(el=>el.textContent=el.dataset[l]); }
+
+// ====== BOOT ======
+const bootSteps = [
+  'Initializing Quantum UI...',
+  'Loading WebGPU Ray Tracer...',
+  'Mounting Liquid Glass 2.0...',
+  'Starting Autonomous Daemon...',
+  'Connecting Yjs CRDT...',
+  'Warming Offline AI...',
+  'Ready.'
+];
+let b=0; const bootInt=setInterval(()=>{
+  $('#bootbar').style.width=((b+1)/bootSteps.length*100)+'%';
+  $('#bootlog').textContent=bootSteps[b];
+  b++; if(b>=bootSteps.length){ clearInterval(bootInt); setTimeout(()=>{ $('#boot').style.display='none'; $('#login').style.display='flex'; initLogin(); }, 600); }
+}, 400);
+
+// ====== LOGIN ======
+function initLogin(){
+  const users = [
+    {id:'admin', name:'Maew Maew Ooh', role:'admin', avatar:'👑', color:'from-violet-600 to-fuchsia-600'},
+    {id:'dev', name:'นักพัฒนา', role:'user', avatar:'💻', color:'from-cyan-600 to-blue-600'},
+    {id:'guest', name:'Guest', role:'guest', avatar:'👤', color:'from-zinc-600 to-zinc-700'}
+  ];
+  $('#users').innerHTML = users.map(u=>`
+    <button onclick="login('${u.id}','${u.role}')" class="w-full group liquid-glass-2 rounded-2xl p-3 flex items-center gap-3 hover:scale-[1.01] transition">
+      <div class="w-11 h-11 rounded-xl bg-gradient-to-br ${u.color} flex items-center justify-center text-xl">${u.avatar}</div>
+      <div class="text-left">
+        <div class="font-medium">${u.name}</div>
+        <div class="text-xs text-white/50 uppercase tracking-wider">${u.role} • RBAC</div>
+      </div>
+      <i class="ri-arrow-right-line ml-auto group-hover:translate-x-1 transition"></i>
+    </button>
+  `).join('');
+}
+async function loginWithPasskey(){
+  try { await navigator.credentials.get({publicKey:{challenge:new Uint8Array(32),allowCredentials:[]}}); } catch{}
+  login('admin','admin');
+}
+function loginSSO(){ toast('SSO • SAML Mock connected'); login('dev','user'); }
+function login(id,role){
+  state.user={id,role,name:id};
+  $('#login').style.display='none';
+  $('#os').classList.remove('hidden');
+  initOS();
+  toast(t('ยินดีต้อนรับสู่ SHIKHOR v25','Welcome to SHIKHOR v25'));
+}
+
+// ====== OS INIT ======
+function initOS(){
+  updateTime(); setInterval(updateTime,1000);
+  initRaytracer();
+  initDesktopIcons();
+  initDock();
+  initStartApps();
+  initServiceWorker();
+  initAutoBackup();
+  initSelfHealing();
+  initCollabCursors();
+  setInterval(()=>{ $('#sync-status').innerHTML='<i class="ri-cloud-fill text-cyan-400 animate-pulse"></i> Syncing'; setTimeout(()=>$('#sync-status').innerHTML='<i class="ri-cloud-fill text-cyan-400"></i> Synced',1200); },15000);
+  createWindow('ai'); // auto open AI
+}
+function updateTime(){ const d=new Date(); $('#island-time').textContent=d.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}); }
+function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.remove('hidden'); setTimeout(()=>t.classList.add('hidden'),2200); }
+
+// ====== RAYTRACER WEBGPU ======
+let rayActive=true;
+async function initRaytracer(){
+  const canvas=$('#ray'); canvas.width=innerWidth; canvas.height=innerHeight;
+  if(!navigator.gpu){ canvas.style.background='radial-gradient(1000px 600px at 70% 20%, #1e1b4b, #000)'; return; }
+  const adapter=await navigator.gpu.requestAdapter(); const device=await adapter.requestDevice();
+  const ctx=canvas.getContext('webgpu'); const format=navigator.gpu.getPreferredCanvasFormat();
+  ctx.configure({device,format,alphaMode:'opaque'});
+  const code=`
+  @group(0) @binding(0) var<uniform> u : vec2f;
+  @vertex fn vs(@builtin(vertex_index) i:u32)->@builtin(position) vec4f {
+    var p=array(vec2f(-1,-1),vec2f(3,-1),vec2f(-1,3)); return vec4f(p[i],0,1);
+  }
+  fn sphere(ro:vec3f, rd:vec3f, c:vec3f, r:f32)->f32{
+    let oc=ro-c; let b=dot(oc,rd); let c2=dot(oc,oc)-r*r; let h=b*b-c2; return select(-1.0,b+sqrt(max(0.0,h)),h>0.0);
+  }
+  @fragment fn fs(@builtin(position) p:vec4f)->@location(0) vec4f {
+    let uv=(p.xy/u-0.5)*vec2(u.x/u.y,1.0); 
+    let ro=vec3f(0,0,-3); let rd=normalize(vec3f(uv,1.2));
+    var col=vec3f(0.02,0.01,0.05);
+    let s1=sphere(ro,rd,vec3f(-0.8+sin(u.y*0.001)*0.2,0.2,0),0.6);
+    let s2=sphere(ro,rd,vec3f(0.7, -0.1, 0.5),0.5);
+    let s3=sphere(ro,rd,vec3f(0, -0.7, 0.8),0.4);
+    if(s1>0.0){ col=mix(col,vec3f(0.55,0.3,1.0),0.8); }
+    if(s2>0.0){ col=mix(col,vec3f(0.0,0.8,1.0),0.7); }
+    if(s3>0.0){ col=mix(col,vec3f(1.0,0.3,0.6),0.7); }
+    col+=0.15*pow(1.0-length(uv),3.0); return vec4f(col,1.0);
+  }`;
+  const mod=device.createShaderModule({code});
+  const pipe=device.createRenderPipeline({layout:'auto',vertex:{module:mod,entryPoint:'vs'},fragment:{module:mod,entryPoint:'fs',targets:[{format}]}});
+  const uniBuf=device.createBuffer({size:8,usage:7}); const bg=device.createBindGroup({layout:pipe.getBindGroupLayout(0),entries:[{binding:0,resource:{buffer:uniBuf}}]});
+  function frame(){
+    if(!rayActive) return requestAnimationFrame(frame);
+    device.queue.writeBuffer(uniBuf,0,new Float32Array([canvas.width,canvas.height,performance.now()]));
+    const enc=device.createCommandEncoder(); const pass=enc.beginRenderPass({colorAttachments:[{view:ctx.getCurrentTexture().createView(),loadOp:'clear',storeOp:'store'}]});
+    pass.setPipeline(pipe); pass.setBindGroup(0,bg); pass.draw(3); pass.end(); device.queue.submit([enc.finish()]);
+    requestAnimationFrame(frame);
+  } frame();
+  addEventListener('resize',()=>{canvas.width=innerWidth; canvas.height=innerHeight;});
+}
+function toggleRay(){ rayActive=!rayActive; toast(rayActive?'Ray Tracing ON':'Ray Tracing OFF'); }
+
+// ====== DESKTOP ICONS + PHYSICS ======
+const appsMeta = [
+  {id:'ai', name:'AI Autonomous', icon:'ri-brain-fill', color:'from-violet-600 to-purple-600'},
+  {id:'code', name:'VS Code Pro', icon:'ri-code-box-fill', color:'from-blue-600 to-cyan-600'},
+  {id:'term', name:'Terminal', icon:'ri-terminal-box-fill', color:'from-zinc-700 to-black'},
+  {id:'devops', name:'DevOps', icon:'ri-ship-fill', color:'from-sky-600 to-blue-700'},
+  {id:'api', name:'API Lab', icon:'ri-flashlight-fill', color:'from-amber-500 to-orange-600'},
+  {id:'sql', name:'SQL Studio', icon:'ri-database-2-fill', color:'from-emerald-600 to-teal-600'},
+  {id:'enterprise', name:'Enterprise', icon:'ri-building-4-fill', color:'from-indigo-600 to-violet-600'},
+  {id:'cloud', name:'Cloud Sync', icon:'ri-cloud-fill', color:'from-cyan-500 to-blue-500'},
+  {id:'collab', name:'Collab Suite', icon:'ri-team-fill', color:'from-pink-600 to-rose-600'},
+  {id:'auto', name:'Autonomous', icon:'ri-planet-fill', color:'from-fuchsia-600 to-violet-600'},
+  {id:'forge', name:'Plugin Forge', icon:'ri-hammer-fill', color:'from-orange-600 to-red-600'},
+  {id:'studio', name:'Automation', icon:'ri-flow-chart', color:'from-teal-500 to-cyan-600'},
+  {id:'lab', name:'System Lab', icon:'ri-flask-fill', color:'from-lime-500 to-green-600'},
+  {id:'secure', name:'Security', icon:'ri-shield-keyhole-fill', color:'from-red-600 to-rose-700'},
+];
+function initDesktopIcons(){
+  const grid=$('#icon-grid'); grid.innerHTML=appsMeta.map((a,i)=>`
+    <button data-app="${a.id}" class="icon absolute w-[84px] flex flex-col items-center gap-2 group" style="left:${60+(i%7)*120}px; top:${40+Math.floor(i/7)*120}px">
+      <div class="w-[64px] h-[64px] rounded-[18px] bg-gradient-to-br ${a.color} flex items-center justify-center shadow-xl group-hover:scale-105 transition liquid-glass"><i class="${a.icon} text-2xl"></i></div>
+      <span class="text-[11px] bg-black/60 px-2 py-0.5 rounded-md backdrop-blur">${a.name}</span>
+    </button>
+  `).join('');
+  grid.querySelectorAll('.icon').forEach(b=>b.onclick=()=>createWindow(b.dataset.app));
+}
+let physicsEngine=null;
+function togglePhysics(){
+  if(physicsEngine){ Matter.Engine.clear(physicsEngine); physicsEngine=null; initDesktopIcons(); return toast('Physics OFF');}
+  const engine=Matter.Engine.create(); physicsEngine=engine; const world=engine.world; world.gravity.y=0.3;
+  document.querySelectorAll('.icon').forEach(el=>{
+    const b=Matter.Bodies.rectangle(el.offsetLeft+42, el.offsetTop+42, 84,84,{restitution:0.8}); b.el=el; Matter.World.add(world,b);
+  });
+  const walls=[ Matter.Bodies.rectangle(innerWidth/2, innerHeight+30, innerWidth,60,{isStatic:true}), Matter.Bodies.rectangle(innerWidth/2,-30,innerWidth,60,{isStatic:true}), Matter.Bodies.rectangle(-30,innerHeight/2,60,innerHeight,{isStatic:true}), Matter.Bodies.rectangle(innerWidth+30,innerHeight/2,60,innerHeight,{isStatic:true}) ];
+  Matter.World.add(world,walls);
+  (function upd(){ Matter.Engine.update(engine); world.bodies.forEach(b=>{ if(b.el){ b.el.style.left=(b.position.x-42)+'px'; b.el.style.top=(b.position.y-42)+'px'; b.el.style.transform=`rotate(${b.angle}rad)`; } }); requestAnimationFrame(upd); })();
+  toast('Physics ON');
+}
+
+// ====== DOCK & START ======
+function initDock(){
+  $('#dock').innerHTML=appsMeta.slice(0,8).map(a=>`
+    <button onclick="createWindow('${a.id}')" class="w-12 h-12 rounded-2xl bg-white/5 hover:bg-white/10 flex items-center justify-center group relative">
+      <i class="${a.icon} text-xl"></i>
+      <span class="absolute -top-8 scale-0 group-hover:scale-100 transition text-[10px] bg-black/80 px-2 py-1 rounded whitespace-nowrap">${a.name}</span>
+    </button>`).join('');
+}
+function initStartApps(){
+  $('#appgrid').innerHTML=appsMeta.map(a=>`
+    <button onclick="createWindow('${a.id}')" class="liquid-glass rounded-[20px] p-4 text-left hover:bg-white/10 transition">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br ${a.color} flex items-center justify-center mb-2"><i class="${a.icon}"></i></div>
+      <div class="text-sm font-medium">${a.name}</div>
+      <div class="text-[11px] text-white/50">v25 • Ready</div>
+    </button>`).join('');
+}
+function toggleStart(){ $('#start').classList.toggle('hidden'); }
+function toggleQuick(){ $('#quick').classList.toggle('hidden'); }
+function setWorkspace(w){ state.workspace=w; toast('Workspace: '+w.toUpperCase()); }
+
+// ====== WINDOW MANAGER ======
+function createWindow(id){
+  if(state.windows[id]){ focus(id); return; }
+  const meta=appsMeta.find(a=>a.id===id)||{name:id,icon:'ri-apps-fill',color:'from-zinc-600 to-zinc-700'};
+  const win=document.createElement('div');
+  win.id='w-'+id; win.className='window absolute pointer-events-auto liquid-glass rounded-[28px] shadow-[0_40px_80px_rgba(0,0,0,0.6)] overflow-hidden border border-white/10 flex flex-col';
+  win.style.width='min(1100px,95vw)'; win.style.height='min(700px,85vh)'; win.style.left='50%'; win.style.top='50%'; win.style.transform='translate(-50%,-50%)'; win.style.zIndex=++state.z;
+  win.innerHTML=`
+    <div class="h-11 flex items-center px-3 gap-2 bg-white/[0.04] border-b border-white/10 cursor-move" onmousedown="dragStart(event,'${id}')">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-br ${meta.color} flex items-center justify-center"><i class="${meta.icon} text-sm"></i></div>
+      <div class="text-sm font-medium flex-1">${meta.name}</div>
+      <div class="flex gap-1.5">
+        <button onclick="minimize('${id}')" class="w-7 h-7 rounded-lg hover:bg-white/10 flex items-center justify-center"><i class="ri-subtract-line"></i></button>
+        <button onclick="maximize('${id}')" class="w-7 h-7 rounded-lg hover:bg-white/10 flex items-center justify-center"><i class="ri-fullscreen-line"></i></button>
+        <button onclick="closeWin('${id}')" class="w-7 h-7 rounded-lg hover:bg-red-500/80 flex items-center justify-center"><i class="ri-close-line"></i></button>
+      </div>
+    </div>
+    <div class="flex-1 overflow-hidden bg-black/40 relative" id="c-${id}">${renderApp(id)}</div>
+  `;
+  $('#windows').appendChild(win); state.windows[id]=win; focus(id);
+  setTimeout(()=>initApp(id),50);
+  pushHistory();
+}
+function focus(id){ Object.values(state.windows).forEach(w=>w.classList.remove('active')); if(state.windows[id]){ state.windows[id].classList.add('active'); state.windows[id].style.zIndex=++state.z; } }
+function closeWin(id){ state.windows[id]?.remove(); delete state.windows[id]; }
+function minimize(id){ state.windows[id].style.transform='translate(-50%,-50%) scale(0.8)'; state.windows[id].style.opacity='0'; setTimeout(()=>state.windows[id].style.display='none',200); }
+function maximize(id){ const w=state.windows[id]; w.style.width='100vw'; w.style.height='calc(100vh - 88px)'; w.style.left='0'; w.style.top='0'; w.style.transform='none'; w.style.borderRadius='0'; }
+let drag={}; function dragStart(e,id){ drag={id, sx:e.clientX, sy:e.clientY, el:state.windows[id], x:state.windows[id].offsetLeft, y:state.windows[id].offsetTop}; document.onmousemove=dragMove; document.onmouseup=()=>document.onmousemove=null; focus(id); }
+function dragMove(e){ if(!drag.el) return; drag.el.style.left=(drag.x+e.clientX-drag.sx)+'px'; drag.el.style.top=(drag.y+e.clientY-drag.sy)+'px'; drag.el.style.transform='none'; }
+
+// 3D toggle
+function toggle3D(){ document.getElementById('os').classList.toggle('mode-3d'); toast('3D Desktop '+ (document.getElementById('os').classList.contains('mode-3d')?'ON':'OFF')); }
+
+// ====== APP RENDERERS ======
+function renderApp(id){
+  switch(id){
+    case 'ai': return `
+      <div class="h-full grid lg:grid-cols-3 gap-0">
+        <div class="lg:col-span-2 p-5 flex flex-col">
+          <div class="flex items-center gap-2 mb-3"><i class="ri-sparkling-2-fill text-violet-400"></i><h3 class="font-semibold">SHIKHOR Autonomous AI</h3><span class="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-green-500/20 text-green-300">ONLINE</span></div>
+          <div id="ai-chat" class="flex-1 overflow-y-auto space-y-3 pr-2"></div>
+          <div class="mt-3 flex gap-2"><input id="ai-in" class="flex-1 bg-white/5 rounded-xl px-3 py-2.5 text-sm outline-none" placeholder="สั่ง AI ภาษาไทย... / Ask AI..."><button onclick="askAI()" class="px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-sm">Send</button></div>
+        </div>
+        <div class="border-l border-white/10 p-4 space-y-3 bg-white/[0.02]">
+          <div class="liquid-glass rounded-2xl p-3"><div class="text-xs text-white/60">Self-Optimization</div><div class="mt-1 text-2xl font-light">87% <span class="text-xs">RAM freed</span></div><button onclick="runOptimize()" class="mt-2 w-full py-1.5 rounded-lg bg-white/10 text-xs">Optimize Now</button></div>
+          <div class="liquid-glass rounded-2xl p-3"><div class="text-xs text-white/60">AI Scheduler</div><div id="scheduler" class="text-sm mt-1">Planning 3 tasks...</div></div>
+          <div class="liquid-glass rounded-2xl p-3"><div class="text-xs text-white/60">Security Monitor</div><div class="text-green-400 text-sm">0 threats • E2E Active</div></div>
+          <div class="liquid-glass rounded-2xl p-3"><div class="text-xs text-white/60">Predictive Resources</div><canvas id="pred" height="60"></canvas></div>
+        </div>
+      </div>`;
+    case 'code': return `
+      <div class="h-full flex flex-col">
+        <div class="flex items-center gap-2 px-3 py-2 border-b border-white/10 text-xs">
+          <button onclick="gitAction('clone')" class="px-2 py-1 rounded bg-white/10">Clone</button>
+          <button onclick="gitAction('commit')" class="px-2 py-1 rounded bg-white/10">Commit</button>
+          <button onclick="gitAction('push')" class="px-2 py-1 rounded bg-white/10">Push</button>
+          <span class="ml-auto text-white/50">isomorphic-git • GitHub Sync</span>
+        </div>
+        <div id="monaco" class="flex-1"></div>
+      </div>`;
+    case 'term': return `
+      <div class="h-full flex flex-col">
+        <div class="flex gap-2 p-2 border-b border-white/10 text-xs">
+          <button onclick="termCmd('shik install')" class="px-2 py-1 bg-white/10 rounded">shik install</button>
+          <button onclick="termCmd('ssh')" class="px-2 py-1 bg-white/10 rounded">SSH</button>
+          <button onclick="termCmd('docker')" class="px-2 py-1 bg-white/10 rounded">Docker</button>
+          <span class="ml-auto">xterm.js • WebAssembly</span>
+        </div>
+        <div id="xterm" class="flex-1 p-2 bg-black"></div>
+      </div>`;
+    case 'devops': return `
+      <div class="h-full grid md:grid-cols-2 gap-4 p-4 overflow-auto">
+        <div class="liquid-glass rounded-2xl p-4"><h4 class="font-medium mb-2 flex items-center gap-2"><i class="ri-ship-fill text-sky-400"></i>Docker Manager</h4><div id="docker" class="space-y-2 text-sm"></div></div>
+        <div class="liquid-glass rounded-2xl p-4"><h4 class="font-medium mb-2 flex items-center gap-2"><i class="ri-kubernetes-fill text-blue-400"></i>Kubernetes</h4><canvas id="k8s" height="160"></canvas></div>
+      </div>`;
+    case 'api': return `<div class="h-full p-4 flex flex-col gap-3">
+      <div class="flex gap-2"><select id="method" class="bg-white/5 rounded-lg px-2 py-2 text-sm"><option>GET</option><option>POST</option><option>PUT</option><option>DELETE</option></select><input id="url" class="flex-1 bg-white/5 rounded-lg px-3 py-2 text-sm" value="https://jsonplaceholder.typicode.com/posts/1"><button onclick="runAPI()" class="px-4 py-2 rounded-lg bg-cyan-600 text-sm">Send</button></div>
+      <div class="grid grid-cols-2 gap-3 flex-1"><textarea id="api-body" class="bg-black/50 rounded-xl p-3 text-xs font-mono" placeholder="Body JSON"></textarea><pre id="api-res" class="bg-black/50 rounded-xl p-3 text-xs overflow-auto"></pre></div>
+    </div>`;
+    case 'sql': return `<div class="h-full p-4 flex flex-col"><div class="flex gap-2 mb-2"><input id="sql-q" class="flex-1 bg-white/5 rounded-lg px-3 py-2 text-sm" value="SELECT * FROM users"><button onclick="runSQL()" class="px-3 py-2 rounded-lg bg-emerald-600 text-sm">Run</button></div><div class="flex-1 grid grid-cols-2 gap-3"><textarea id="sql-schema" class="bg-black/50 rounded-xl p-3 text-xs font-mono">CREATE TABLE users (id INT, name STRING, role STRING);\nINSERT INTO users VALUES (1,'Maew','admin'),(2,'Dev','user');</textarea><div id="sql-out" class="bg-black/50 rounded-xl p-3 text-xs overflow-auto"></div></div></div>`;
+    case 'enterprise': return `<div class="h-full p-4 overflow-auto grid lg:grid-cols-3 gap-4">
+      <div class="liquid-glass rounded-2xl p-4 lg:col-span-2"><h4 class="font-medium mb-3">Organization Dashboard</h4><canvas id="orgchart" height="120"></canvas></div>
+      <div class="liquid-glass rounded-2xl p-4"><h4 class="font-medium mb-2">RBAC Users</h4><div id="rbac" class="space-y-2 text-sm"></div></div>
+      <div class="liquid-glass rounded-2xl p-4 lg:col-span-3"><h4 class="font-medium mb-2">Audit Log</h4><div id="audit" class="text-xs font-mono h-[150px] overflow-auto space-y-1"></div></div>
+    </div>`;
+    case 'cloud': return `<div class="h-full p-4 grid md:grid-cols-3 gap-4 overflow-auto">
+      <div class="liquid-glass rounded-2xl p-4"><h4 class="font-medium mb-3">Connectors</h4><div class="grid grid-cols-2 gap-2" id="clouds"></div></div>
+      <div class="liquid-glass rounded-2xl p-4 md:col-span-2"><h4 class="font-medium mb-2">Realtime Sync</h4><div class="h-[200px] relative bg-black/30 rounded-xl overflow-hidden"><div class="absolute inset-0 flex items-center justify-center text-white/40">Files syncing • 12.4 MB/s</div></div></div>
+    </div>`;
+    case 'collab': return `<div class="h-full grid lg:grid-cols-3 gap-0">
+      <div class="lg:col-span-2 flex flex-col border-r border-white/10"><div class="p-3 border-b border-white/10 text-sm">Shared Notes • CRDT Yjs</div><textarea id="y-note" class="flex-1 bg-transparent p-4 outline-none resize-none"></textarea></div>
+      <div class="flex flex-col"><div class="p-3 border-b border-white/10 text-sm">Whiteboard + Chat</div><canvas id="board" class="flex-1 bg-white/5 touch-none"></canvas><div class="h-[150px] border-t border-white/10 p-2 flex flex-col"><div id="chat" class="flex-1 overflow-y-auto text-xs space-y-1"></div><div class="flex gap-1 mt-1"><input id="chat-in" class="flex-1 bg-white/5 rounded px-2 py-1 text-xs" placeholder="Message"><button onclick="sendChat()" class="px-2 py-1 bg-white/10 rounded text-xs">Send</button></div></div></div>
+    </div>`;
+    case 'auto': return `<div class="h-full p-5 overflow-auto grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+      ${['Self-Healing','Auto Backup','AI Scheduler','Security','Predictive','Auto Update','Plugin AI','Memory'].map((t,i)=>`
+      <div class="liquid-glass-2 rounded-[24px] p-4"><div class="text-sm font-medium mb-1">${t}</div><div class="text-2xl font-light">${[ '100%','58s','3 tasks','Secure','87%','v25.1','Ready','4.2GB'][i]}</div><div class="text-[11px] text-white/50 mt-1">Autonomous daemon active</div></div>`).join('')}
+    </div>`;
+    case 'forge': return `<div class="h-full grid md:grid-cols-2 gap-0">
+      <div class="p-4 border-r border-white/10 flex flex-col"><h4 class="font-medium mb-2">Plugin AI Writer</h4><textarea id="plug-prompt" class="flex-1 bg-black/40 rounded-xl p-3 text-sm" placeholder="Describe plugin in Thai or English...">สร้างแอปเครื่องคิดเลขลอยน้ำ</textarea><button onclick="genPlugin()" class="mt-2 py-2 rounded-xl bg-orange-600">Generate Plugin</button></div>
+      <div class="p-4 flex flex-col"><h4 class="font-medium mb-2">Extension API Console</h4><textarea id="ext-code" class="flex-1 bg-black/60 rounded-xl p-3 font-mono text-xs">shikhorAPI.createWindow('myApp', '<h1>Hello</h1>')</textarea><button onclick="runExt()" class="mt-2 py-2 rounded-xl bg-white/10">Run</button></div>
+    </div>`;
+    case 'studio': return `<div class="h-full p-4 flex flex-col"><div class="flex items-center gap-2 mb-3"><h4 class="font-medium">AI Automation Studio</h4><button onclick="recordMacro()" class="ml-auto px-3 py-1.5 rounded-lg bg-white/10 text-xs"><i class="ri-record-circle-fill text-red-400"></i> Macro Recorder</button></div><div class="flex-1 liquid-glass rounded-2xl relative overflow-hidden" id="flow"><div class="absolute top-4 left-4 text-xs text-white/50">Drag nodes • Visual workflow • Time Travel</div></div><div class="mt-3 flex items-center gap-3"><span class="text-xs">Time Travel</span><input type="range" min="0" max="10" value="10" oninput="timeTravel(this.value)" class="flex-1"></div></div>`;
+    case 'lab': return `<div class="h-full p-4 grid lg:grid-cols-3 gap-4 overflow-auto">
+      <div class="liquid-glass rounded-2xl p-4"><h4 class="font-medium mb-2">WebAssembly Runtime</h4><button onclick="runWasm()" class="px-3 py-1.5 bg-lime-600 rounded-lg text-sm">Run add(40,2)</button><pre id="wasm-out" class="mt-2 text-xs bg-black/50 p-2 rounded"></pre></div>
+      <div class="liquid-glass rounded-2xl p-4"><h4 class="font-medium mb-2">Theme Engine</h4><div class="space-y-2 text-sm"><label>Primary <input type="color" value="#8b5cf6" onchange="setTheme('--primary',this.value)" class="ml-2"></label><br><label>Accent <input type="color" value="#06b6d4" onchange="setTheme('--accent',this.value)" class="ml-2"></label></div></div>
+      <div class="liquid-glass rounded-2xl p-4"><h4 class="font-medium mb-2">VM Sandbox</h4><iframe id="vm" sandbox="allow-scripts" class="w-full h-[120px] bg-white rounded-lg"></iframe><button onclick="runVM()" class="mt-2 px-3 py-1 bg-white/10 rounded text-xs">Run</button></div>
+      <div class="liquid-glass rounded-2xl p-4 lg:col-span-3"><h4 class="font-medium mb-2">Widget SDK & App SDK</h4><div class="flex gap-2"><button onclick="addWidget()" class="px-3 py-1.5 bg-white/10 rounded text-xs">Add CPU Widget</button><button onclick="createAppSDK()" class="px-3 py-1.5 bg-white/10 rounded text-xs">Create App from SDK</button></div><div id="widgets" class="mt-3 flex gap-2 flex-wrap"></div></div>
+    </div>`;
+    case 'secure': return `<div class="h-full p-5 overflow-auto grid md:grid-cols-2 gap-4">
+      <div class="liquid-glass rounded-2xl p-4"><h4 class="font-medium mb-3">Security Center</h4><div class="space-y2 text-sm"><div class="flex justify-between py-2 border-b border-white/5"><span>Passkey</span><span class="text-green-400">Active</span></div><div class="flex justify-between py-2 border-b border-white/5"><span>Biometric</span><span class="text-green-400">Face ID</span></div><div class="flex justify-between py-2 border-b border-white/5"><span>E2E Encryption</span><span>${state.e2e?'ON':'OFF'}</span></div><div class="flex justify-between py-2"><span>WebRTC P2P</span><span class="text-cyan-400">Encrypted</span></div></div></div>
+      <div class="liquid-glass rounded-2xl p-4"><h4 class="font-medium mb-2">Push & Background Sync</h4><button onclick="enablePush()" class="px-3 py-1.5 bg-rose-600 rounded-lg text-sm mr-2">Enable Push</button><button onclick="testSync()" class="px-3 py-1.5 bg-white/10 rounded-lg text-sm">Background Sync</button><p class="text-xs text-white/50 mt-3">PWA installed • Service Worker v25 active</p></div>
+    </div>`;
+    default: return `<div class="h-full flex items-center justify-center text-white/50">App ${id}</div>`;
+  }
+}
+
+// ====== APP INIT ======
+function initApp(id){
+  switch(id){
+    case 'ai':
+      const chat=$('#ai-chat'); chat.innerHTML=`<div class="liquid-glass rounded-2xl p-3 max-w-[80%]"><b>SHIKHOR AI:</b> สวัสดีครับ ผมเป็น Autonomous OS พร้อม Self-Healing, Predictive และ Plugin AI ครับ</div>`;
+      new Chart($('#pred'),{type:'line',data:{labels:[...Array(12).keys()],datasets:[{data:[40,45,52,60,58,65,72,78,82,85,87,90],borderColor:'#8b5cf6',tension:0.4,fill:false}]},options:{plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:false}}}});
+      break;
+    case 'code':
+      require.config({paths:{vs:'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs'}}); require(['vs/editor/editor.main'],()=>{ window.monacoEditor=monaco.editor.create($('#monaco'),{value:"// SHIKHOR OS v25 • Monaco\nfunction hello(){\n  console.log('สวัสดี SHIKHOR');\n}",language:'javascript',theme:'vs-dark',automaticLayout:true}); });
+      break;
+    case 'term':
+      const term=new Terminal({theme:{background:'#00000000',foreground:'#e2e8f0'},fontFamily:'ui-monospace',fontSize:13}); const fit=new FitAddon.FitAddon(); term.loadAddon(fit); term.open($('#xterm')); fit.fit(); term.writeln('shikhor@v25:~$ Welcome to SHIKHOR Terminal'); term.writeln('Type "help" for commands'); window._term=term; term.onData(d=>{ if(d==='\r') term.write('\r\nshikhor@v25:~$ '); else term.write(d); });
+      break;
+    case 'devops':
+      $('#docker').innerHTML=['api','web','db','ai'].map((n,i)=>`<div class="flex items-center justify-between p-2 rounded-lg bg-white/5"><span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full ${i<3?'bg-green-500':'bg-amber-500'}"></span>${n}</span><span class="text-xs">${Math.floor(Math.random()*200)}MB</span></div>`).join('');
+      new Chart($('#k8s'),{type:'doughnut',data:{labels:['Running','Pending','Failed'],datasets:[{data:[24,3,1],backgroundColor:['#22c55e','#eab308','#ef4444']}]},options:{plugins:{legend:{position:'bottom',labels:{color:'#fff'}}}}});
+      break;
+    case 'enterprise':
+      $('#rbac').innerHTML=[['admin','full'],['dev','write'],['guest','read']].map(([r,p])=>`<div class="flex justify-between p-2 bg-white/5 rounded-lg"><span>${r}</span><span class="text-xs text-white/60">${p}</span></div>`).join('');
+      const audit=$('#audit'); setInterval(()=>{ audit.innerHTML+=`<div>[${new Date().toLocaleTimeString()}] ${state.user.id} accessed ${appsMeta[Math.floor(Math.random()*appsMeta.length)].name}</div>`; audit.scrollTop=audit.scrollHeight; },3000);
+      new Chart($('#orgchart'),{type:'bar',data:{labels:['Eng','Design','Sales','AI'],datasets:[{label:'Active',data:[42,18,24,9],backgroundColor:'#8b5cf6'}]},options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#aaa'}},y:{ticks:{color:'#aaa'}}}}});
+      break;
+    case 'cloud':
+      $('#clouds').innerHTML=['Google Drive','Dropbox','OneDrive','iCloud'].map(c=>`<button class="p-3 rounded-xl bg-white/5 hover:bg-white/10 text-xs">${c}</button>`).join('');
+      break;
+    case 'collab':
+      const ydoc=new Y.Yjs?.Doc?.()||new Y.Doc(); const ytext=ydoc.getText('note'); const ta=$('#y-note'); ytext.observe(()=>ta.value=ytext.toString()); ta.oninput=()=>{ ydoc.transact(()=>{ ytext.delete(0,ytext.length); ytext.insert(0,ta.value); }); }; ta.value='เริ่มต้นเขียนร่วมกัน... / Start collaborating...';
+      const board=$('#board'); const ctx=board.getContext('2d'); function resize(){ board.width=board.clientWidth; board.height=board.clientHeight; } resize(); addEventListener('resize',resize); let drawing=false; board.onpointerdown=e=>{drawing=true; ctx.beginPath(); ctx.moveTo(e.offsetX,e.offsetY)}; board.onpointermove=e=>{if(drawing){ctx.lineTo(e.offsetX,e.offsetY); ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke()}}; board.onpointerup=()=>drawing=false;
+      break;
+  }
+}
+
+// ====== AI FUNCTIONS ======
+function askAI(){ const i=$('#ai-in'); const v=i.value; if(!v) return; const chat=$('#ai-chat'); chat.innerHTML+=`<div class="text-right"><div class="inline-block liquid-glass-2 rounded-2xl px-3 py-2 max-w-[80%] text-sm">${v}</div></div>`; i.value=''; setTimeout(()=>{ chat.innerHTML+=`<div class="liquid-glass rounded-2xl p-3 max-w-[80%] text-sm">กำลังประมวลผลแบบออฟไลน์... ผมจะช่วย ${v.includes('schedule')?'จัดตาราง':'สร้างโค้ด'} ให้ครับ • Self-Healing ทำงานปกติ</div>`; chat.scrollTop=chat.scrollHeight; },600); }
+function gitAction(a){ toast(`Git ${a} • isomorphic-git mock success`); }
+function termCmd(c){ const t=window._term; if(!t) return; if(c==='shik install'){ t.writeln('\r\nshikhor@v25:~$ shik install lodash'); setTimeout(()=>t.writeln('✓ installed lodash@4.17.21 • WebAssembly cached'),500);} if(c==='ssh'){ t.writeln('\r\nConnecting via xterm.js...'); setTimeout(()=>t.writeln('ssh shikhor@cloud • E2E encrypted'),600);} if(c==='docker'){ t.writeln('\r\nCONTAINER ID  STATUS'); t.writeln('a1b2c3d4      Up 2h'); } }
+function runAPI(){ const m=$('#method').value,u=$('#url').value; fetch(u,{method:m}).then(r=>r.text()).then(txt=>$('#api-res').textContent=txt.slice(0,2000)).catch(e=>$('#api-res').textContent='Error: '+e); }
+function runSQL(){ try{ alasql($('#sql-schema').value); const res=alasql($('#sql-q').value); $('#sql-out').textContent=JSON.stringify(res,null,2); }catch(e){ $('#sql-out').textContent=e; } }
+function sendChat(){ const i=$('#chat-in'),v=i.value; if(!v)return; $('#chat').innerHTML+=`<div><b>${state.user.id}:</b> ${v}</div>`; i.value=''; }
+function runOptimize(){ toast('Memory optimized • 1.2GB freed'); document.querySelectorAll('.window').forEach(w=>w.style.transform='translateZ(0)'); }
+function genPlugin(){ const p=$('#plug-prompt').value; toast('Plugin AI generated'); createWindow('forge'); setTimeout(()=>$('#ext-code').value=`// Generated Plugin\nshikhorAPI.registerApp('calc','<div style="padding:20px">Calculator: ${p}</div>')`,300); }
+function runExt(){ try{ eval($('#ext-code').value); toast('Extension executed'); }catch(e){ toast('Error '+e.message); } }
+function recordMacro(){ toast('Macro recording... click anywhere'); const clicks=[]; const h=e=>clicks.push({x:e.clientX,y:e.clientY,t:Date.now()}); addEventListener('click',h,{once:false}); setTimeout(()=>{removeEventListener('click',h); toast(`Macro saved • ${clicks.length} steps`);},4000); }
+let historySnap=0; function pushHistory(){ state.history.push(JSON.stringify({windows:Object.keys(state.windows),time:Date.now()})); state.historyIndex=state.history.length-1; } function timeTravel(v){ toast('Time Travel: v'+v); }
+function runWasm(){ const wasmCode=new Uint8Array([0,97,115,109,1,0,0,0,1,7,1,96,2,127,127,1,127,3,2,1,0,7,7,1,3,97,100,100,0,0,10,9,1,7,0,32,0,32,1,106,11]); WebAssembly.instantiate(wasmCode).then(m=>$('#wasm-out').textContent='Result: '+m.instance.exports.add(40,2)); }
+function setTheme(v,c){ document.documentElement.style.setProperty(v,c); }
+function addWidget(){ const w=document.createElement('div'); w.className='liquid-glass px-3 py-2 rounded-xl text-xs'; w.innerHTML=`CPU ${(Math.random()*30+20).toFixed(0)}%`; $('#widgets').appendChild(w); }
+function createAppSDK(){ const id='app'+Date.now(); appsMeta.push({id,name:'My App',icon:'ri-apps-fill',color:'from-violet-600 to-fuchsia-600'}); initDock(); initStartApps(); toast('App SDK: created'); }
+function runVM(){ $('#vm').srcdoc='<h3 style="font-family:sans-serif;padding:20px">SHIKHOR VM Sandbox • isolated</h3>'; }
+function enablePush(){ Notification.requestPermission().then(p=>{ if(p==='granted') new Notification('SHIKHOR OS',{body:'Push notifications enabled • v25'}); }); }
+function testSync(){ toast('Background Sync registered'); }
+
+// ====== AUTONOMOUS SYSTEMS ======
+function initAutoBackup(){ setInterval(()=>{ localStorage.setItem('shikhor_backup',JSON.stringify({t:Date.now(),state})); $('#ai-status').innerHTML='<i class="ri-sparkling-fill text-violet-400 animate-spin"></i> Backup'; setTimeout(()=>$('#ai-status').innerHTML='<i class="ri-sparkling-fill text-violet-400"></i> Autonomous',800); },60000); }
+function initSelfHealing(){ window.addEventListener('error',e=>{ toast('Self-Healing: recovered app'); console.log('Healed',e.message); }); }
+function runOptimize(){ if(window.gc) window.gc(); toast('Self-Optimization complete'); }
+
+// ====== COLLAB & PWA ======
+function initCollabCursors(){ const c=$('#cursors'); ['Alex','Mina'].forEach((n,i)=>{ const d=document.createElement('div'); d.className='cursor-collab'; d.innerHTML=`<svg width="16" height="24"><path d="M0 0 L0 16 L5 12 L8 18 L10 17 L7 11 L12 11 Z" fill="${['#8b5cf6','#06b6d4'][i]}"/></svg><span class="ml-4 -mt-5 inline-block px-1.5 py-0.5 rounded bg-black/70 text-[10px]">${n}</span>`; c.appendChild(d); setInterval(()=>{ d.style.left=Math.random()*innerWidth*0.7+100+'px'; d.style.top=Math.random()*innerHeight*0.6+100+'px'; },3000); }); }
+function initServiceWorker(){ const sw=`self.addEventListener('install',e=>{self.skipWaiting()});self.addEventListener('activate',e=>{});self.addEventListener('fetch',e=>{});self.addEventListener('sync',e=>{self.registration.showNotification('SHIKHOR Sync',{body:'Background sync complete'})});`; const blob=new Blob([sw],{type:'text/javascript'}); navigator.serviceWorker.register(URL.createObjectURL(blob)); }
+
+// ====== TOGGLES ======
+function toggleE2E(el){ state.e2e=el.checked; toast('E2E '+(state.e2e?'ON':'OFF')); }
+function toggleEdge(el){ state.edge=el.checked; toast('Edge Compute '+(state.edge?'Local':'Cloud')); }
+
+// ====== GESTURES ======
+let touchX=0; addEventListener('touchstart',e=>touchX=e.touches[0].clientX); addEventListener('touchend',e=>{ const dx=e.changedTouches[0].clientX-touchX; if(Math.abs(dx)>80){ toggleStart(); } });
+
+// ====== STARTUP TOASTS ======
+setTimeout(()=>toast('All v21-v25 features loaded'),2000);
+</script>
+<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
+
+</div></div></body></html>
