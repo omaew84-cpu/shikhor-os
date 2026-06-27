@@ -1,414 +1,340 @@
-<html lang="th"><head><!-- PLAYABLE_TOUCH_PATCH_V1 --><script>
-(function() {
-  if (window.__playableTouchPatchInstalled) return;
-  window.__playableTouchPatchInstalled = true;
-  var origAdd = EventTarget.prototype.addEventListener;
-  var blockedTypes = { touchstart: 1, touchmove: 1, wheel: 1 };
-  EventTarget.prototype.addEventListener = function(type, listener, options) {
-    if (blockedTypes[type]) {
-      if (options === undefined || options === null) {
-        options = { passive: true };
-      } else if (typeof options === 'boolean') {
-        options = { capture: options, passive: true };
-      } else {
-        options = Object.assign({}, options, { passive: true });
-      }
-    }
-    return origAdd.call(this, type, listener, options);
-  };
-})();
-</script><script>window.Intl=window.Intl||{};Intl.t=function(s){return(Intl._locale&&Intl._locale[s])||s;};</script>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>SHIKHOR OS v17 Quantum Edition</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Noto+Sans+Thai:wght@300;400;500&amp;display=swap" rel="stylesheet">
-<!-- Playables SDK from v16 - preserved -->
-<script>
-window.PlayablesSDK = window.PlayablesSDK || {
-  init: () => console.log('SHIKHOR Playables SDK v16 ready'),
-  onReady: (cb) => document.readyState === 'complete' ? cb() : window.addEventListener('load', cb),
-  onCTAClick: () => {}
-};
-PlayablesSDK.init();
-</script>
-<style>
-:root{color-scheme:dark}
-*{ -webkit-tap-highlight-color: transparent }
-body{font-family:'Inter','Noto Sans Thai',system-ui;background:#020617;overflow:hidden;overscroll-behavior:none}
-.glass{backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);background:rgba(15,23,42,.65);border:1px solid rgba(255,255,255,.08)}
-.glass-2{background:rgba(10,15,30,.55);backdrop-filter:blur(40px) saturate(200%);-webkit-backdrop-filter:blur(40px) saturate(200%);border:1px solid rgba(255,255,255,.12);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 25px 80px -20px rgba(0,0,0,.8)}
-.window{transition:box-shadow .2s,transform .15s;contain:layout}
-.window.active{box-shadow:0 0 0 1px rgba(139,92,246,.6),0 30px 80px -20px rgba(0,0,0,.75)}
-.no-scrollbar::-webkit-scrollbar{display:none}
-.no-scrollbar{scrollbar-width:none}
-#aurora{position:fixed;inset:0;z-index:0}
-.snap-preview{position:fixed;border:2px solid rgba(139,92,246,.9);background:rgba(139,92,246,.18);border-radius:16px;pointer-events:none;z-index:9999;transition:all .12s ease-out}
-.dock-item{transition:transform .15s}
-.dock-item:active{transform:scale(.92)}
-@media (max-width:768px){.window{border-radius:0!important;left:0!important;top:36px!important;width:100%!important;height:calc(100% - 104px)!important;transform:none!important}}
-</style>
-<style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.fixed{position:fixed}.absolute{position:absolute}.relative{position:relative}.inset-0{inset:0px}.z-\[10000\]{z-index:10000}.z-10{z-index:10}.z-20{z-index:20}.z-\[9998\]{z-index:9998}.z-\[9999\]{z-index:9999}.mx-auto{margin-left:auto;margin-right:auto}.mx-1{margin-left:0.25rem;margin-right:0.25rem}.mx-1\.5{margin-left:0.375rem;margin-right:0.375rem}.mx-3{margin-left:0.75rem;margin-right:0.75rem}.-mt-1{margin-top:-0.25rem}.mb-1{margin-bottom:0.25rem}.mb-4{margin-bottom:1rem}.mb-6{margin-bottom:1.5rem}.mb-7{margin-bottom:1.75rem}.mb-1\.5{margin-bottom:0.375rem}.mb-8{margin-bottom:2rem}.mr-1\.5{margin-right:0.375rem}.mt-1{margin-top:0.25rem}.mt-1\.5{margin-top:0.375rem}.mt-4{margin-top:1rem}.mt-\[18vh\]{margin-top:18vh}.flex{display:flex}.grid{display:grid}.hidden{display:none}.h-10{height:2.5rem}.h-20{height:5rem}.h-3{height:0.75rem}.h-11{height:2.75rem}.h-4{height:1rem}.h-5{height:1.25rem}.h-8{height:2rem}.h-9{height:2.25rem}.h-\[20px\]{height:20px}.h-\[56px\]{height:56px}.h-full{height:100%}.h-screen{height:100vh}.h-12{height:3rem}.max-h-\[380px\]{max-height:380px}.min-h-0{min-height:0px}.w-10{width:2.5rem}.w-20{width:5rem}.w-3{width:0.75rem}.w-\[340px\]{width:340px}.w-11{width:2.75rem}.w-4{width:1rem}.w-5{width:1.25rem}.w-\[20px\]{width:20px}.w-\[360px\]{width:360px}.w-px{width:1px}.w-screen{width:100vw}.min-w-0{min-width:0px}.max-w-6xl{max-width:72rem}.max-w-\[640px\]{max-width:640px}.max-w-\[98vw\]{max-width:98vw}.flex-1{flex:1 1 0%}.shrink-0{flex-shrink:0}@keyframes pulse{50%{opacity:.5}}.animate-pulse{animation:pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite}.touch-none{touch-action:none}.select-none{-webkit-user-select:none;user-select:none}.resize-none{resize:none}.grid-cols-3{grid-template-columns:repeat(3, minmax(0, 1fr))}.grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.flex-col{flex-direction:column}.place-items-center{place-items:center}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-3{gap:0.75rem}.gap-1{gap:0.25rem}.gap-1\.5{gap:0.375rem}.gap-2{gap:0.5rem}.gap-2\.5{gap:0.625rem}.gap-3\.5{gap:0.875rem}.space-y-3 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.75rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.75rem * var(--tw-space-y-reverse))}.overflow-auto{overflow:auto}.overflow-hidden{overflow:hidden}.overflow-x-auto{overflow-x:auto}.overflow-y-auto{overflow-y:auto}.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rounded-3xl{border-radius:1.5rem}.rounded-\[2\.5rem\]{border-radius:2.5rem}.rounded-full{border-radius:9999px}.rounded{border-radius:0.25rem}.rounded-2xl{border-radius:1rem}.rounded-\[1\.4rem\]{border-radius:1.4rem}.rounded-\[1\.5rem\]{border-radius:1.5rem}.rounded-lg{border-radius:0.5rem}.rounded-md{border-radius:0.375rem}.rounded-xl{border-radius:0.75rem}.border{border-width:1px}.border-b{border-bottom-width:1px}.border-r{border-right-width:1px}.border-t{border-top-width:1px}.border-white\/30{border-color:rgb(255 255 255 / 0.3)}.border-white\/10{border-color:rgb(255 255 255 / 0.1)}.border-white\/20{border-color:rgb(255 255 255 / 0.2)}.bg-slate-950{--tw-bg-opacity:1;background-color:rgb(2 6 23 / var(--tw-bg-opacity, 1))}.bg-slate-950\/80{background-color:rgb(2 6 23 / 0.8)}.bg-black\/20{background-color:rgb(0 0 0 / 0.2)}.bg-black\/30{background-color:rgb(0 0 0 / 0.3)}.bg-black\/40{background-color:rgb(0 0 0 / 0.4)}.bg-black\/70{background-color:rgb(0 0 0 / 0.7)}.bg-emerald-500\/20{background-color:rgb(16 185 129 / 0.2)}.bg-slate-950\/90{background-color:rgb(2 6 23 / 0.9)}.bg-transparent{background-color:transparent}.bg-violet-600{--tw-bg-opacity:1;background-color:rgb(124 58 237 / var(--tw-bg-opacity, 1))}.bg-white\/10{background-color:rgb(255 255 255 / 0.1)}.bg-white\/15{background-color:rgb(255 255 255 / 0.15)}.bg-gradient-to-br{background-image:linear-gradient(to bottom right, var(--tw-gradient-stops))}.from-violet-600{--tw-gradient-from:#7c3aed var(--tw-gradient-from-position);--tw-gradient-to:rgb(124 58 237 / 0) var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), var(--tw-gradient-to)}.via-fuchsia-600{--tw-gradient-to:rgb(192 38 211 / 0)  var(--tw-gradient-to-position);--tw-gradient-stops:var(--tw-gradient-from), #c026d3 var(--tw-gradient-via-position), var(--tw-gradient-to)}.to-cyan-400{--tw-gradient-to:#22d3ee var(--tw-gradient-to-position)}.p-8{padding:2rem}.p-0\.5{padding:0.125rem}.p-1{padding:0.25rem}.p-2{padding:0.5rem}.p-2\.5{padding:0.625rem}.p-3{padding:0.75rem}.p-6{padding:1.5rem}.px-1\.5{padding-left:0.375rem;padding-right:0.375rem}.px-2{padding-left:0.5rem;padding-right:0.5rem}.px-2\.5{padding-left:0.625rem;padding-right:0.625rem}.px-3{padding-left:0.75rem;padding-right:0.75rem}.px-4{padding-left:1rem;padding-right:1rem}.py-0\.5{padding-top:0.125rem;padding-bottom:0.125rem}.py-1{padding-top:0.25rem;padding-bottom:0.25rem}.py-1\.5{padding-top:0.375rem;padding-bottom:0.375rem}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.pb-2{padding-bottom:0.5rem}.pt-16{padding-top:4rem}.text-center{text-align:center}.font-mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}.text-\[11px\]{font-size:11px}.text-\[22px\]{font-size:22px}.text-xs{font-size:0.75rem;line-height:1rem}.text-\[10px\]{font-size:10px}.text-\[12px\]{font-size:12px}.text-\[13px\]{font-size:13px}.text-\[17px\]{font-size:17px}.text-\[28px\]{font-size:28px}.text-sm{font-size:0.875rem;line-height:1.25rem}.font-semibold{font-weight:600}.font-medium{font-weight:500}.tabular-nums{--tw-numeric-spacing:tabular-nums;font-variant-numeric:var(--tw-ordinal) var(--tw-slashed-zero) var(--tw-numeric-figure) var(--tw-numeric-spacing) var(--tw-numeric-fraction)}.leading-relaxed{line-height:1.625}.tracking-wide{letter-spacing:0.025em}.tracking-tight{letter-spacing:-0.025em}.text-slate-100{--tw-text-opacity:1;color:rgb(241 245 249 / var(--tw-text-opacity, 1))}.text-slate-400{--tw-text-opacity:1;color:rgb(148 163 184 / var(--tw-text-opacity, 1))}.text-violet-300\/80{color:rgb(196 181 253 / 0.8)}.text-white{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.text-emerald-300{--tw-text-opacity:1;color:rgb(110 231 183 / var(--tw-text-opacity, 1))}.text-slate-300{--tw-text-opacity:1;color:rgb(203 213 225 / var(--tw-text-opacity, 1))}.text-slate-500{--tw-text-opacity:1;color:rgb(100 116 139 / var(--tw-text-opacity, 1))}.text-violet-400{--tw-text-opacity:1;color:rgb(167 139 250 / var(--tw-text-opacity, 1))}.opacity-0{opacity:0}.shadow-2xl{--tw-shadow:0 25px 50px -12px rgb(0 0 0 / 0.25);--tw-shadow-colored:0 25px 50px -12px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-\[0_0_40px_rgba\(139\2c 92\2c 246\2c \.5\)\]{--tw-shadow:0 0 40px rgba(139,92,246,.5);--tw-shadow-colored:0 0 40px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.outline-none{outline:2px solid transparent;outline-offset:2px}.backdrop-blur-2xl{--tw-backdrop-blur:blur(40px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition-all{transition-property:all;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition{transition-property:color, background-color, border-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;transition-property:color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-text-decoration-color, -webkit-backdrop-filter;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.transition-opacity{transition-property:opacity;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.duration-700{transition-duration:700ms}.placeholder\:text-slate-500::placeholder{--tw-text-opacity:1;color:rgb(100 116 139 / var(--tw-text-opacity, 1))}.hover\:bg-violet-500:hover{--tw-bg-opacity:1;background-color:rgb(139 92 246 / var(--tw-bg-opacity, 1))}.hover\:bg-white\/10:hover{background-color:rgb(255 255 255 / 0.1)}.hover\:text-violet-300:hover{--tw-text-opacity:1;color:rgb(196 181 253 / var(--tw-text-opacity, 1))}.focus\:border-violet-500\/60:focus{border-color:rgb(139 92 246 / 0.6)}.active\:scale-95:active{--tw-scale-x:.95;--tw-scale-y:.95;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}@media (min-width: 640px){.sm\:block{display:block}.sm\:grid-cols-3{grid-template-columns:repeat(3, minmax(0, 1fr))}}@media (min-width: 768px){.md\:block{display:block}.md\:flex{display:flex}.md\:grid-cols-4{grid-template-columns:repeat(4, minmax(0, 1fr))}}@media (min-width: 1024px){.lg\:grid-cols-5{grid-template-columns:repeat(5, minmax(0, 1fr))}}@media (min-width: 1280px){.xl\:flex{display:flex}}</style></head>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SHIKHOR Studio — AI Development Studio</title>
+    <script>
+    (function(){if(window.__p)return;window.__p=!0;const o=EventTarget.prototype.addEventListener;const b={touchstart:1,touchmove:1,wheel:1};EventTarget.prototype.addEventListener=function(t,l,opt){if(b[t]){opt=opt==null?{passive:!0}:(typeof opt==='boolean')?{capture:opt,passive:!0}:Object.assign({},opt,{passive:!0})}return o.call(this,t,l,opt)}})();
+    window.PlayablesSDK=window.PlayablesSDK||{init:()=>console.log('✅ SDK Ready'),onReady:c=>document.readyState==='complete'?c():addEventListener('load',c)};
+    PlayablesSDK.init();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Thai:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script>
+    tailwind.config={darkMode:'class',theme:{extend:{fontFamily:{sans:['Inter','Noto Sans Thai','system-ui']},colors:{primary:'#8b5cf6',accent:'#06b6d4',studio:{50:'#faf5ff',100:'#f3e8ff',200:'#e9d5ff',300:'#d8b4fe',400:'#c084fc',500:'#a855f7',600:'#9333ea',700:'#7e22ce',800:'#6b21a8',900:'#581c87'}}}}};
+    </script>
+    <style>
+    :root{color-scheme:dark;--g1:rgba(15,23,42,.62);--g2:rgba(10,15,30,.55);--gs:rgba(88,28,135,.22)}
+    *{-webkit-tap-highlight-color:transparent;box-sizing:border-box}
+    body{font-family:'Inter','Noto Sans Thai',system-ui;background:#020617;overflow:hidden}
+    .glass{backdrop-filter:blur(22px) saturate(180%);-webkit-backdrop-filter:blur(22px) saturate(180%);background:var(--g1);border:1px solid rgba(255,255,255,.08)}
+    .glass-2{background:var(--g2);backdrop-filter:blur(36px) saturate(200%);border:1px solid rgba(255,255,255,.12);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 25px 80px -20px #000}
+    .glass-studio{background:var(--gs);backdrop-filter:blur(28px);border:1px solid rgba(168,85,247,.15)}
+    .window{transition:box-shadow .2s,transform .15s}
+    .window.active{box-shadow:0 0 0 1px rgba(139,92,246,.55),0 30px 80px -20px #000c}
+    .no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{scrollbar-width:none}
+    .studio-nav-item{transition:all .18s ease;border-left:3px solid transparent}
+    .studio-nav-item.active{background:rgba(139,92,246,.12);border-left-color:#8b5cf6;color:#c4b5fd}
+    #aurora{position:fixed;inset:0;z-index:0}
+    .snap-preview{position:fixed;border:2px solid #8b5cf6e6;background:rgba(139,92,246,.18);border-radius:16px;pointer-events:none;z-index:9999;transition:all .12s}
+    @media (max-width:768px){.window{border-radius:0!important;left:0!important;top:36px!important;width:100%!important;height:calc(100% - 104px)!important;transform:none!important}.studio-sidebar{display:none}}
+    </style>
+</head>
 <body class="bg-slate-950 text-slate-100 select-none touch-none">
-<canvas id="aurora" width="719" height="1445"></canvas>
+<canvas id="aurora"></canvas>
 
-<!-- PIN LOCK -->
+<!-- ========== LOCK SCREEN ========== -->
 <div id="lock" class="fixed inset-0 z-[10000] flex items-center justify-center">
-  <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-2xl"></div>
-  <div class="relative glass-2 rounded-[2.5rem] p-8 w-[340px] text-center shadow-2xl">
-    <div class="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-violet-600 via-fuchsia-600 to-cyan-400 flex items-center justify-center mb-4 shadow-[0_0_40px_rgba(139,92,246,.5)] animate-pulse">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="atom" aria-hidden="true" class="lucide lucide-atom w-10 h-10 text-white"><circle cx="12" cy="12" r="1"></circle><path d="M20.2 20.2c2.04-2.03.02-7.36-4.5-11.9-4.54-4.52-9.87-6.54-11.9-4.5-2.04 2.03-.02 7.36 4.5 11.9 4.54 4.52 9.87 6.54 11.9 4.5Z"></path><path d="M15.7 15.7c4.52-4.54 6.54-9.87 4.5-11.9-2.03-2.04-7.36-.02-11.9 4.5-4.52 4.54-6.54 9.87-4.5 11.9 2.03 2.04 7.36.02 11.9-4.5Z"></path></svg>
+    <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-2xl"></div>
+    <div class="relative glass-2 rounded-[2.5rem] p-8 w-[360px] text-center">
+        <div class="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-violet-600 via-fuchsia-600 to-cyan-400 flex items-center justify-center mb-4 shadow-[0_0_40px_rgba(139,92,246,.5)]">
+            <i data-lucide="atom" class="w-10 h-10"></i>
+        </div>
+        <h1 class="text-[22px] font-semibold">SHIKHOR Studio</h1>
+        <p class="text-[11px] text-violet-300/80">AI Development Studio</p>
+        <p class="text-xs text-slate-400 mb-6 mt-2">PIN เพื่อเข้าสู่พื้นที่ทำงาน</p>
+        <div id="pin-dots" class="flex justify-center gap-3 mb-7">
+            <div class="w-3 h-3 rounded-full border border-white/30"></div>
+            <div class="w-3 h-3 rounded-full border border-white/30"></div>
+            <div class="w-3 h-3 rounded-full border border-white/30"></div>
+            <div class="w-3 h-3 rounded-full border border-white/30"></div>
+        </div>
+        <div class="grid grid-cols-3 gap-3" id="pinpad"></div>
+        <p class="text-[10px] text-slate-500 mt-4">PIN ค่าเริ่มต้น: 2580</p>
     </div>
-    <h1 class="text-[22px] font-semibold tracking-wide">SHIKHOR OS</h1>
-    <p class="text-[11px] text-violet-300/80 -mt-1 mb-1">v17 Quantum Edition</p>
-    <p class="text-xs text-slate-400 mb-6">ใส่รหัส PIN เพื่อปลดล็อก</p>
-    <div id="pin-dots" class="flex justify-center gap-3 mb-7">
-      <div class="w-3 h-3 rounded-full border border-white/30 transition-all"></div>
-      <div class="w-3 h-3 rounded-full border border-white/30 transition-all"></div>
-      <div class="w-3 h-3 rounded-full border border-white/30 transition-all"></div>
-      <div class="w-3 h-3 rounded-full border border-white/30 transition-all"></div>
-    </div>
-    <div class="grid grid-cols-3 gap-3" id="pinpad"><button class="h-12 rounded-2xl glass hover:bg-white/10 active:scale-95 transition text-[17px] font-medium">1</button><button class="h-12 rounded-2xl glass hover:bg-white/10 active:scale-95 transition text-[17px] font-medium">2</button><button class="h-12 rounded-2xl glass hover:bg-white/10 active:scale-95 transition text-[17px] font-medium">3</button><button class="h-12 rounded-2xl glass hover:bg-white/10 active:scale-95 transition text-[17px] font-medium">4</button><button class="h-12 rounded-2xl glass hover:bg-white/10 active:scale-95 transition text-[17px] font-medium">5</button><button class="h-12 rounded-2xl glass hover:bg-white/10 active:scale-95 transition text-[17px] font-medium">6</button><button class="h-12 rounded-2xl glass hover:bg-white/10 active:scale-95 transition text-[17px] font-medium">7</button><button class="h-12 rounded-2xl glass hover:bg-white/10 active:scale-95 transition text-[17px] font-medium">8</button><button class="h-12 rounded-2xl glass hover:bg-white/10 active:scale-95 transition text-[17px] font-medium">9</button><button class="h-12 rounded-2xl glass hover:bg-white/10 active:scale-95 transition text-[17px] font-medium">C</button><button class="h-12 rounded-2xl glass hover:bg-white/10 active:scale-95 transition text-[17px] font-medium">0</button><button class="h-12 rounded-2xl glass hover:bg-white/10 active:scale-95 transition text-[17px] font-medium"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="delete" aria-hidden="true" class="lucide lucide-delete w-5 h-5 mx-auto"><path d="M10 5a2 2 0 0 0-1.344.519l-6.328 5.74a1 1 0 0 0 0 1.481l6.328 5.741A2 2 0 0 0 10 19h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z"></path><path d="m12 9 6 6"></path><path d="m18 9-6 6"></path></svg></button></div>
-    <p class="text-[10px] text-slate-500 mt-4">ค่าเริ่มต้น: 2580</p>
-  </div>
 </div>
 
-<!-- DESKTOP -->
-<div id="desktop" class="relative z-10 h-screen w-screen overflow-hidden flex flex-col opacity-0 transition-opacity duration-700">
-  <!-- Top Bar -->
-  <div class="h-9 flex items-center justify-between px-3 gap-2 glass mt-1.5 mx-1.5 rounded-xl text-[12px] shrink-0">
-    <div class="flex items-center gap-2.5 min-w-0">
-      <div class="w-5 h-5 rounded-md bg-gradient-to-br from-violet-600 to-cyan-400 grid place-items-center"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="atom" aria-hidden="true" class="lucide lucide-atom w-3 h-3"><circle cx="12" cy="12" r="1"></circle><path d="M20.2 20.2c2.04-2.03.02-7.36-4.5-11.9-4.54-4.52-9.87-6.54-11.9-4.5-2.04 2.03-.02 7.36 4.5 11.9 4.54 4.52 9.87 6.54 11.9 4.5Z"></path><path d="M15.7 15.7c4.52-4.54 6.54-9.87 4.5-11.9-2.03-2.04-7.36-.02-11.9 4.5-4.52 4.54-6.54 9.87-4.5 11.9 2.03 2.04 7.36.02 11.9-4.5Z"></path></svg></div>
-      <span class="font-medium tracking-wide hidden sm:block">SHIKHOR</span>
-      <div id="top-apps" class="hidden md:flex gap-2.5 text-slate-400 truncate"></div>
-    </div>
-    <div class="flex items-center gap-3">
-      <button id="theme-1" class="hover:text-violet-300 transition p-1 rounded hover:bg-white/10" title="ดำสนิท"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="moon" aria-hidden="true" class="lucide lucide-moon w-4 h-4"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"></path></svg></button>
-      <button id="theme-2" class="hover:text-violet-300 transition p-1 rounded hover:bg-white/10" title="ดำม่วง"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="moon-star" aria-hidden="true" class="lucide lucide-moon-star w-4 h-4"><path d="M18 5h4"></path><path d="M20 3v4"></path><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"></path></svg></button>
-      <button id="theme-3" class="hover:text-violet-300 transition p-1 rounded hover:bg-white/10" title="ดำเทา"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="eclipse" aria-hidden="true" class="lucide lucide-eclipse w-4 h-4"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a7 7 0 1 0 10 10"></path></svg></button>
-      <button id="theme-4" class="hover:text-violet-300 transition p-1 rounded hover:bg-white/10" title="AMOLED"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="circle-off" aria-hidden="true" class="lucide lucide-circle-off w-4 h-4"><path d="m2 2 20 20"></path><path d="M8.35 2.69A10 10 0 0 1 21.3 15.65"></path><path d="M19.08 19.08A10 10 0 1 1 4.92 4.92"></path></svg></button>
-      <button id="ai-toggle" class="hover:text-violet-300 transition p-1 rounded hover:bg-white/10" title="AI ผู้ช่วย"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="sparkles" aria-hidden="true" class="lucide lucide-sparkles w-4 h-4"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"></path><path d="M20 2v4"></path><path d="M22 4h-4"></path><circle cx="4" cy="20" r="2"></circle></svg></button>
-      <button id="cmd-btn" class="hover:text-violet-300 transition p-1 rounded hover:bg-white/10 hidden md:block" title="Command (Ctrl+K)"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="command" aria-hidden="true" class="lucide lucide-command w-4 h-4"><path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3"></path></svg></button>
-      <span id="clock-top" class="tabular-nums text-slate-300"></span>
-    </div>
-  </div>
-
-  <div class="flex-1 relative flex min-h-0">
-    <div id="workspace" class="flex-1 relative overflow-hidden touch-none"></div>
-
-    <!-- AI Assistant -->
-    <div id="ai-panel" class="hidden xl:flex w-[360px] mr-1.5 mb-1.5 glass-2 rounded-2xl flex-col overflow-hidden shrink-0">
-      <div class="h-11 flex items-center justify-between px-3 border-b border-white/10 shrink-0">
-        <div class="flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="bot" aria-hidden="true" class="lucide lucide-bot w-4 h-4 text-violet-400"><path d="M12 8V4H8"></path><rect width="16" height="12" x="4" y="8" rx="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M15 13v2"></path><path d="M9 13v2"></path></svg><span class="text-[13px] font-medium">SHIKHOR AI</span><span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">ONLINE</span></div>
-        <div class="flex gap-1 p-0.5 bg-black/30 rounded-lg">
-          <button data-tab="chat" class="ai-tab px-2.5 py-1 text-[11px] rounded-md bg-white/15">แชท</button>
-          <button data-tab="notes" class="ai-tab px-2.5 py-1 text-[11px] rounded-md hover:bg-white/10">โน้ต</button>
+<!-- ========== MAIN SHELL ========== -->
+<div id="desktop" class="relative z-10 h-screen w-screen flex flex-col opacity-0 transition-opacity duration-700">
+    <!-- TOP BAR -->
+    <div class="h-10 flex items-center justify-between px-3 gap-2 glass mt-1.5 mx-1.5 rounded-xl text-[12px] shrink-0">
+        <div class="flex items-center gap-3 min-w-0">
+            <div class="w-6 h-6 rounded-lg bg-gradient-to-br from-violet-600 to-cyan-400 grid place-items-center"><i data-lucide="atom" class="w-3.5 h-3.5"></i></div>
+            <span class="font-semibold">SHIKHOR <span class="text-violet-300">Studio</span></span>
+            <div class="h-4 w-px bg-white/15"></div>
+            <div id="project-path" class="text-slate-400 truncate">/ พื้นที่ทำงานหลัก</div>
         </div>
-      </div>
-      <div id="ai-chat" class="flex-1 flex flex-col min-h-0">
-        <div id="ai-messages" class="flex-1 overflow-y-auto p-3 space-y-3 text-[13px] leading-relaxed no-scrollbar"></div>
-        <div class="p-2.5 border-t border-white/10">
-          <div class="flex gap-2"><input id="ai-input" class="flex-1 bg-black/40 rounded-xl px-3 py-2 text-[13px] outline-none border border-white/10 focus:border-violet-500/60 placeholder:text-slate-500" placeholder="ถามอะไรก็ได้..."><button id="ai-send" class="px-3 bg-violet-600 hover:bg-violet-500 rounded-xl transition grid place-items-center"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="send" aria-hidden="true" class="lucide lucide-send w-4 h-4"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"></path><path d="m21.854 2.147-10.94 10.939"></path></svg></button></div>
+        <div class="flex items-center gap-2">
+            <button data-new class="px-2 py-1 bg-violet-600/80 hover:bg-violet-500 rounded-lg text-[11px] flex items-center gap-1"><i data-lucide="plus" class="w-3.5 h-3.5"></i>สร้างใหม่</button>
+            <button data-cmd class="hover:text-violet-300 p-1 rounded hover:bg-white/10 hidden md:block" title="Ctrl+K"><i data-lucide="command" class="w-4 h-4"></i></button>
+            <span id="clock" class="tabular-nums text-slate-300"></span>
         </div>
-      </div>
-      <div id="ai-notes" class="hidden flex-1 flex-col min-h-0">
-        <div class="p-2 flex gap-1.5 border-b border-white/10"><input id="note-title" class="flex-1 bg-black/40 rounded-lg px-2 py-1.5 text-[12px] outline-none border border-white/10" placeholder="ชื่อโน้ตใหม่"><button id="note-save" class="text-[11px] px-3 bg-violet-600 hover:bg-violet-500 rounded-lg transition">บันทึก</button></div>
-        <div class="flex-1 grid grid-cols-2 min-h-0">
-          <textarea id="note-editor" class="bg-transparent p-2.5 text-[12px] leading-relaxed outline-none resize-none border-r border-white/10 font-mono" placeholder="# โน้ต Markdown..."></textarea>
-          <div id="note-preview" class="p-2.5 text-[12px] overflow-auto leading-relaxed"></div>
-        </div>
-        <div class="h-20 overflow-auto border-t border-white/10 p-2 text-[10px] bg-black/20" id="note-history"><div class="text-slate-500">ประวัติเวอร์ชันจะแสดงที่นี่</div></div>
-      </div>
     </div>
-  </div>
 
-  <!-- Dock -->
-  <div class="relative z-20 flex justify-center pb-2 px-2">
-    <div class="glass-2 rounded-[1.4rem] px-2.5 py-2 flex items-center gap-1 overflow-x-auto no-scrollbar max-w-[98vw]">
-      <div id="dock-apps" class="flex gap-1"></div>
-      <div class="w-px h-8 bg-white/10 mx-1 shrink-0"></div>
-      <button id="launchpad-btn" class="dock-item w-11 h-11 grid place-items-center rounded-xl hover:bg-white/10 shrink-0" title="App Store"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="layout-grid" aria-hidden="true" class="lucide lucide-layout-grid w-[20px] h-[20px]"><rect width="7" height="7" x="3" y="3" rx="1"></rect><rect width="7" height="7" x="14" y="3" rx="1"></rect><rect width="7" height="7" x="14" y="14" rx="1"></rect><rect width="7" height="7" x="3" y="14" rx="1"></rect></svg></button>
+    <div class="flex-1 flex min-h-0 gap-1.5 px-1.5 pb-1.5">
+        <!-- ✅ SIDEBAR — DOCK ใหม่ ครบ 12 เมนู ตามแผน -->
+        <aside class="studio-sidebar w-[72px] md:w-[190px] glass-2 rounded-xl shrink-0 flex flex-col overflow-hidden py-2">
+            <nav class="flex-1 flex flex-col gap-0.5 px-1">
+                <a class="studio-nav-item active flex items-center gap-2.5 px-2.5 py-2.5 rounded-lg text-[12px] font-medium" data-view="dashboard"><i data-lucide="layout-dashboard" class="w-4.5 h-4.5 shrink-0"></i><span class="hidden md:inline">🏠 Dashboard</span></a>
+                <a class="studio-nav-item flex items-center gap-2.5 px-2.5 py-2.5 rounded-lg text-[12px] font-medium" data-view="web"><i data-lucide="globe" class="w-4.5 h-4.5 shrink-0"></i><span class="hidden md:inline">🌐 Website Builder</span></a>
+                <a class="studio-nav-item flex items-center gap-2.5 px-2.5 py-2.5 rounded-lg text-[12px] font-medium" data-view="sys"><i data-lucide="server-cog" class="w-4.5 h-4.5 shrink-0"></i><span class="hidden md:inline">⚙️ System Builder</span></a>
+                <a class="studio-nav-item flex items-center gap-2.5 px-2.5 py-2.5 rounded-lg text-[12px] font-medium" data-view="ui"><i data-lucide="palette" class="w-4.5 h-4.5 shrink-0"></i><span class="hidden md:inline">🎨 UI Designer</span></a>
+                <a class="studio-nav-item flex items-center gap-2.5 px-2.5 py-2.5 rounded-lg text-[12px] font-medium" data-view="ai"><i data-lucide="sparkles" class="w-4.5 h-4.5 shrink-0"></i><span class="hidden md:inline">🤖 AI Builder</span></a>
+                <a class="studio-nav-item flex items-center gap-2.5 px-2.5 py-2.5 rounded-lg text-[12px] font-medium" data-view="db"><i data-lucide="database" class="w-4.5 h-4.5 shrink-0"></i><span class="hidden md:inline">🗄 Database</span></a>
+                <a class="studio-nav-item flex items-center gap-2.5 px-2.5 py-2.5 rounded-lg text-[12px] font-medium" data-view="api"><i data-lucide="zap" class="w-4.5 h-4.5 shrink-0"></i><span class="hidden md:inline">🔌 API Builder</span></a>
+                <a class="studio-nav-item flex items-center gap-2.5 px-2.5 py-2.5 rounded-lg text-[12px] font-medium" data-view="mob"><i data-lucide="smartphone" class="w-4.5 h-4.5 shrink-0"></i><span class="hidden md:inline">📱 Mobile Builder</span></a>
+                <a class="studio-nav-item flex items-center gap-2.5 px-2.5 py-2.5 rounded-lg text-[12px] font-medium" data-view="deploy"><i data-lucide="rocket" class="w-4.5 h-4.5 shrink-0"></i><span class="hidden md:inline">🚀 Deploy</span></a>
+                <a class="studio-nav-item flex items-center gap-2.5 px-2.5 py-2.5 rounded-lg text-[12px] font-medium" data-view="market"><i data-lucide="store" class="w-4.5 h-4.5 shrink-0"></i><span class="hidden md:inline">📦 Marketplace</span></a>
+                <a class="studio-nav-item flex items-center gap-2.5 px-2.5 py-2.5 rounded-lg text-[12px] font-medium" data-view="proj"><i data-lucide="folder-open" class="w-4.5 h-4.5 shrink-0"></i><span class="hidden md:inline">📁 Projects</span></a>
+            </nav>
+            <div class="border-t border-white/10 my-1.5 mx-2"></div>
+            <a class="studio-nav-item flex items-center gap-2.5 px-2.5 py-2.5 rounded-lg text-[12px] font-medium mx-1" data-view="set"><i data-lucide="settings" class="w-4.5 h-4.5 shrink-0"></i><span class="hidden md:inline">⚙️ Settings</span></a>
+        </aside>
+
+        <!-- WORKSPACE -->
+        <main id="workspace" class="flex-1 glass rounded-xl overflow-hidden relative"></main>
+
+        <!-- AI PANEL -->
+        <aside id="ai-panel" class="hidden xl:flex w-[340px] glass-2 rounded-xl flex-col overflow-hidden shrink-0">
+            <div class="h-10 flex items-center justify-between px-3 border-b border-white/10 shrink-0">
+                <div class="flex items-center gap-2"><i data-lucide="bot" class="w-4 h-4 text-violet-400"></i><span class="text-[12px] font-medium">AI Assistant</span><span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">ONLINE</span></div>
+            </div>
+            <div id="ai-msgs" class="flex-1 overflow-y-auto p-3 space-y-3 text-[12.5px] leading-relaxed no-scrollbar"></div>
+            <div class="p-2.5 border-t border-white/10">
+                <div class="flex gap-2"><input id="ai-in" class="flex-1 bg-black/40 rounded-xl px-3 py-2 text-[12.5px] outline-none border border-white/10 focus:border-violet-500/60" placeholder="Prompt → Website / System / Code / Design..."><button id="ai-send" class="px-3 bg-violet-600 hover:bg-violet-500 rounded-xl grid place-items-center"><i data-lucide="send" class="w-4 h-4"></i></button></div>
+            </div>
+        </aside>
     </div>
-  </div>
 </div>
 
-<!-- Command Palette -->
+<!-- COMMAND PALETTE -->
 <div id="cmdk" class="fixed inset-0 z-[9999] hidden">
-  <div class="absolute inset-0 bg-black/70 backdrop-blur-2xl" data-close=""></div>
-  <div class="relative max-w-[640px] mx-auto mt-[18vh] glass-2 rounded-[1.5rem] overflow-hidden shadow-2xl mx-3">
-    <div class="flex items-center gap-3 px-4 h-[56px] border-b border-white/10"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="search" aria-hidden="true" class="lucide lucide-search w-5 h-5 text-slate-400 shrink-0"><path d="m21 21-4.34-4.34"></path><circle cx="11" cy="11" r="8"></circle></svg><input id="cmdk-input" class="flex-1 bg-transparent outline-none text-[17px] placeholder:text-slate-500" placeholder="ค้นหาแอพ, ไฟล์, คำสั่ง..."><kbd class="text-[10px] px-1.5 py-0.5 border border-white/20 rounded text-slate-400">ESC</kbd></div>
-    <div id="cmdk-list" class="max-h-[380px] overflow-auto p-2"></div>
-  </div>
-</div>
-
-<!-- Launchpad / App Store -->
-<div id="launchpad" class="fixed inset-0 z-[9998] hidden">
-  <div class="absolute inset-0 bg-slate-950/90 backdrop-blur-2xl" data-close=""></div>
-  <div class="relative h-full overflow-auto no-scrollbar">
-    <div class="max-w-6xl mx-auto p-6 pt-16">
-      <div class="text-center mb-8">
-        <h2 class="text-[28px] font-semibold tracking-tight">App Store</h2>
-        <p class="text-slate-400 text-sm mt-1">Quantum Edition • 15 แอพพร้อมใช้งานออฟไลน์</p>
-      </div>
-      <div id="store-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5"></div>
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-2xl" data-close></div>
+    <div class="relative max-w-[620px] mx-auto mt-[16vh] glass-2 rounded-2xl overflow-hidden mx-3">
+        <div class="flex items-center gap-3 px-4 h-12 border-b border-white/10"><i data-lucide="search" class="w-4 h-4 text-slate-400"></i><input id="cmdk-in" class="flex-1 bg-transparent outline-none text-[15px]" placeholder="ค้นหาเครื่องมือ แม่แบบ คำสั่ง... (ESC ปิด)"></div>
+        <div id="cmdk-list" class="max-h-[380px] overflow-auto p-2 text-[12.5px]"></div>
     </div>
-  </div>
 </div>
 
-<div id="snap-preview" class="snap-preview hidden"></div>
+<div id="snap" class="snap-preview hidden"></div>
 
 <script>
-(() => {
 lucide.createIcons();
 
-// ---------- AURORA ----------
-const aurora = document.getElementById('aurora');
-const actx = aurora.getContext('2d');
-function resizeAurora(){aurora.width=innerWidth*devicePixelRatio;aurora.height=innerHeight*devicePixelRatio;actx.setTransform(1,0,0,1,0,0)}
-addEventListener('resize',resizeAurora);resizeAurora();
-let t=0;
-function auroraLoop(){
- t+=0.004;
- actx.clearRect(0,0,aurora.width,aurora.height);
- actx.globalCompositeOperation='screen';
- const w=innerWidth,h=innerHeight;
- [{x:.2,y:.3,c1:'#7c3aed',c2:'#06b6d4'},{x:.8,y:.2,c1:'#ec4899',c2:'#8b5cf6'},{x:.5,y:.8,c1:'#0ea5e9',c2:'#22d3ee'}].forEach((b,i)=>{
-   const cx=w*(b.x+Math.sin(t*0.7+i)*0.1), cy=h*(b.y+Math.cos(t*0.5+i)*0.08);
-   const g=actx.createRadialGradient(cx*devicePixelRatio,cy*devicePixelRatio,0,cx*devicePixelRatio,cy*devicePixelRatio, Math.max(w,h)*0.6);
-   g.addColorStop(0,b.c1+'dd'); g.addColorStop(0.4,b.c2+'88'); g.addColorStop(1,'transparent');
-   actx.fillStyle=g; actx.beginPath(); actx.arc(cx*devicePixelRatio,cy*devicePixelRatio,Math.max(w,h)*0.5,0,Math.PI*2); actx.fill();
- });
- requestAnimationFrame(auroraLoop);
-}
-auroraLoop();
+/* ========== AURORA BG ========== */
+const A=document.getElementById('aurora'),X=A.getContext('2d');
+function ra(){A.width=innerWidth*devicePixelRatio;A.height=innerHeight*devicePixelRatio}
+addEventListener('resize',ra);ra();
+let T=0;function lp(){T+=0.004;X.clearRect(0,0,A.width,A.height);X.globalCompositeOperation='screen';
+[{x:.2,y:.3,c1:'#7c3aed',c2:'#06b6d4'},{x:.8,y:.2,c1:'#ec4899',c2:'#8b5cf6'},{x:.5,y:.8,c1:'#0ea5e9',c2:'#22d3ee'}].forEach((o,i)=>{
+const cx=innerWidth*(o.x+Math.sin(T*0.7+i)*0.1),cy=innerHeight*(o.y+Math.cos(T*0.5+i)*0.08),r=Math.max(innerWidth,innerHeight)*0.55;
+const g=X.createRadialGradient(cx*dpr,cy*dpr,0,cx*dpr,cy*dpr,r*dpr);g.addColorStop(0,o.c1+'cc');g.addColorStop(0.4,o.c2+'77');g.addColorStop(1,'transparent');
+X.fillStyle=g;X.beginPath();X.arc(cx*dpr,cy*dpr,r*dpr,0,Math.PI*2);X.fill()});requestAnimationFrame(lp)}
+const dpr=devicePixelRatio;lp();
 
-// ---------- PIN LOCK ----------
-const lock=document.getElementById('lock');
-const pinPad=document.getElementById('pinpad');
-const pinDots=[...document.querySelectorAll('#pin-dots div')];
-let pinEntered='', storedPin=localStorage.getItem('shikhor-pin')||'2580';
-'1 2 3 4 5 6 7 8 9 clear 0 back'.split(' ').forEach(k=>{
-  const b=document.createElement('button');
-  b.className='h-12 rounded-2xl glass hover:bg-white/10 active:scale-95 transition text-[17px] font-medium';
-  b.innerHTML = k==='back' ? '<i data-lucide="delete" class="w-5 h-5 mx-auto"></i>' : k==='clear' ? 'C' : k;
-  b.onclick=()=>{
-    if(k==='back'){pinEntered=pinEntered.slice(0,-1)}
-    else if(k==='clear'){pinEntered=''}
-    else if(pinEntered.length<4){pinEntered+=k}
-    pinDots.forEach((d,i)=>d.style.background=i<pinEntered.length?'white':'transparent');
-    if(pinEntered.length===4){
-      setTimeout(()=>{
-        if(pinEntered===storedPin){
-          lock.style.opacity='0'; lock.style.pointerEvents='none';
-          setTimeout(()=>lock.remove(),400);
-          document.getElementById('desktop').style.opacity='1';
-          initOS();
-        }else{pinEntered='';pinDots.forEach(d=>d.style.background='transparent');navigator.vibrate&&navigator.vibrate(100)}
-      },150);
-    }
-  };
-  pinPad.appendChild(b);
+/* ========== PIN LOCK ========== */
+const L=document.getElementById('lock'),PP=document.getElementById('pinpad'),PD=[...document.querySelectorAll('#pin-dots div')];
+let pin='',PIN=localStorage.getItem('sh-pin')||'2580';
+'1 2 3 4 5 6 7 8 9 C 0 ⌫'.split(' ').forEach(k=>{
+    const b=document.createElement('button');b.className='h-12 rounded-2xl glass hover:bg-white/10 active:scale-95 text-[17px] font-medium';b.textContent=k;
+    b.onclick=()=>{if(k==='⌫')pin=pin.slice(0,-1);else if(k==='C')pin='';else if(pin.length<4)pin+=k;
+    PD.forEach((d,i)=>d.style.background=i<pin.length?'#fff':'transparent');
+    if(pin.length===4)setTimeout(()=>{if(pin===PIN){L.style.opacity=0;L.style.pointerEvents='none';setTimeout(()=>L.remove(),400);document.getElementById('desktop').style.opacity=1;boot()}else{pin='';PD.forEach(d=>d.style.background='transparent');navigator.vibrate?.(100)}},180)}
+    PP.appendChild(b)
 });
-lucide.createIcons();
 
-// ---------- CORE ----------
-let zIndex=100;
-const workspace=document.getElementById('workspace');
-const topApps=document.getElementById('top-apps');
-function activate(win){
-  document.querySelectorAll('.window').forEach(w=>w.classList.remove('active'));
-  win.style.zIndex=++zIndex; win.classList.add('active');
-  updateTopApps();
+/* ========== APPS / VIEWS — ครบทุกหมวด ========== */
+const VIEWS={
+    dashboard:()=>`
+    <div class="h-full overflow-auto p-5">
+        <div class="flex flex-wrap items-center gap-3 mb-5">
+            <h1 class="text-2xl font-bold tracking-tight">SHIKHOR <span class="text-violet-400">STUDIO</span></h1>
+            <div class="flex-1"></div>
+            <button data-new-web class="px-3.5 py-2 bg-violet-600 hover:bg-violet-500 rounded-lg text-sm flex items-center gap-1.5"><i data-lucide="globe" class="w-4 h-4"></i>New Website</button>
+            <button data-new-sys class="px-3.5 py-2 bg-cyan-600 hover:bg-cyan-500 rounded-lg text-sm flex items-center gap-1.5"><i data-lucide="server-cog" class="w-4 h-4"></i>New System</button>
+            <button data-new-mob class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-sm flex items-center gap-1.5"><i data-lucide="smartphone" class="w-4 h-4"></i>New Mobile App</button>
+            <button class="px-3 py-2 glass rounded-lg text-sm">Open Project</button>
+            <button class="px-3 py-2 glass rounded-lg text-sm">Import</button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+            <div class="glass-studio rounded-xl p-4"><div class="text-xs text-violet-300">โครงการ</div><div class="text-2xl font-semibold mt-1">12</div><div class="text-[11px] text-slate-400 mt-1">+3 สัปดาห์นี้</div></div>
+            <div class="glass rounded-xl p-4"><div class="text-xs text-cyan-300">Deployed</div><div class="text-2xl font-semibold mt-1">8</div><div class="text-[11px] text-emerald-400 mt-1">● ทุกตัวออนไลน์</div></div>
+            <div class="glass rounded-xl p-4"><div class="text-xs text-fuchsia-300">AI Generated</div><div class="text-2xl font-semibold mt-1">247</div><div class="text-[11px] text-slate-400 mt-1">บรรทัดโค้ด / สินทรัพย์</div></div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div class="lg:col-span-2 glass rounded-xl p-4">
+                <div class="flex items-center mb-3"><h3 class="font-semibold">Recent Projects</h3><div class="flex-1"></div><a class="text-xs text-violet-300">ดูทั้งหมด →</a></div>
+                <div class="space-y-2 text-sm">
+                ${['Landing — Coffee Brand','ระบบ POS ร้านกาแฟ','Portfolio v3','Admin Panel — โรงเรียน','E-commerce — สินค้ามือถือ'].map((n,i)=>`
+                    <div class="flex items-center gap-3 p-2.5 rounded-lg hover:bg-white/5 cursor-pointer"><div class="w-8 h-8 rounded-lg bg-gradient-to-br ${['from-violet-600 to-cyan-400','from-amber-500 to-rose-500','from-emerald-500 to-sky-500','from-fuchsia-500 to-indigo-500','from-orange-500 to-pink-500'][i]} grid place-items-center"><i data-lucide="${['globe','server-cog','palette','layout-dashboard','shopping-bag'][i]}" class="w-4 h-4"></i></div><div class="flex-1 min-w-0"><div class="truncate">${n}</div><div class="text-[11px] text-slate-400">แก้ไขล่าสุด ${i+1} ชม.ก่อน</div></div><span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">ออนไลน์</span></div>
+                `).join('')}
+                </div>
+            </div>
+            <div class="space-y-4">
+                <div class="glass rounded-xl p-4"><h3 class="font-semibold mb-2 text-sm">AI Assistant</h3><p class="text-xs text-slate-400 mb-2">พร้อมสร้างจากข้อความทันที</p><button class="w-full py-2 bg-violet-600/80 hover:bg-violet-500 rounded-lg text-xs">เริ่มสนทนา</button></div>
+                <div class="glass rounded-xl p-4"><h3 class="font-semibold mb-2 text-sm">Templates</h3><div class="text-xs text-slate-400">200+ แม่แบบพร้อมใช้</div></div>
+                <div class="glass rounded-xl p-4"><h3 class="font-semibold mb-2 text-sm">Deployment Status</h3><div class="space-y-1.5 text-[11px]"><div class="flex justify-between"><span>shikhor.co</span><span class="text-emerald-400">● สำเร็จ</span></div><div class="flex justify-between"><span>demo.app</span><span class="text-amber-400">● กำลัง</span></div></div></div>
+            </div>
+        </div>
+    </div>`,
+    web:()=>`<div class="h-full flex flex-col">
+        <div class="h-11 border-b border-white/10 flex items-center gap-2 px-3 text-xs shrink-0">
+            <span class="px-2 py-1 bg-violet-600/20 text-violet-300 rounded">AI Website Builder</span>
+            <span>Landing · Portfolio · Blog · E-commerce · Dashboard · Admin Panel</span>
+            <div class="flex-1"></div>
+            <button class="px-2 py-1 glass rounded">Prompt → Site</button>
+            <button class="px-2 py-1 glass rounded">Drag & Drop</button>
+            <button class="px-2 py-1 bg-emerald-600 rounded">Live Preview</button>
+        </div>
+        <div class="flex-1 grid grid-cols-12 min-h-0">
+            <div class="col-span-2 border-r border-white/10 p-2 overflow-auto text-[11px]"><div class="opacity-60 mb-2">Components</div>${['Section','Hero','Feature','Card','Form','Table','Nav','Footer','Animation'].map(x=>`<div class="p-2 rounded hover:bg-white/5 mb-1 cursor-pointer">${x}</div>`).join('')}</div>
+            <div class="col-span-7 bg-white text-slate-900 p-6 overflow-auto"><h1 class="text-3xl font-bold">🌐 AI Website Builder</h1><p class="mt-2">พิมพ์ข้อความ → ได้เว็บเต็มหน้า · Responsive · Tailwind · SEO</p></div>
+            <div class="col-span-3 border-l border-white/10 p-3 text-xs overflow-auto"><div class="font-semibold mb-2">Theme Builder</div><div class="space-y-2"><input class="w-full bg-black/40 rounded px-2 py-1.5" placeholder="#8b5cf6"><div>Font Pairing</div><div>Color Palette</div></div></div>
+        </div></div>`,
+    sys:()=>`<div class="h-full p-5 overflow-auto">
+        <h2 class="text-lg font-semibold mb-3">⚙️ AI System Builder</h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+        ${['ระบบสมาชิก','POS','ระบบจอง','คลังสินค้า','โรงเรียน','โรงพยาบาล','HR','CRM','ERP','Workflow','Approval','Report'].map(n=>`<div class="glass rounded-xl p-4 hover:border-violet-500/40 cursor-pointer"><i data-lucide="box" class="w-5 h-5 mb-2 text-violet-400"></i><div>${n}</div><div class="text-[11px] text-slate-400 mt-1">สร้างด้วย AI ครบวงจร</div></div>`).join('')}
+        </div></div>`,
+    ui:()=>`<div class="h-full flex flex-col">
+        <div class="h-11 border-b border-white/10 flex items-center gap-2 px-3 text-xs shrink-0"><span>🎨 Visual Builder · Drag & Drop · Responsive · Animation</span></div>
+        <div class="flex-1 grid grid-cols-12 min-h-0">
+            <div class="col-span-2 border-r border-white/10 p-2 text-[11px] overflow-auto">${['Layers','Assets','Symbols','Theme'].map(x=>`<div class="p-2 rounded hover:bg-white/5 mb-1">${x}</div>`).join('')}</div>
+            <div class="col-span-7 bg-slate-100 text-slate-900 grid place-items-center">Canvas — Live Preview</div>
+            <div class="col-span-3 border-l border-white/10 p-3 text-xs overflow-auto">Inspector · Properties</div>
+        </div></div>`,
+    ai:()=>`<div class="h-full p-5 overflow-auto">
+        <h2 class="text-lg font-semibold mb-3">🤖 AI Code & Automation</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mb-4">
+        ${['HTML','CSS','JS','TS','React','Vue','Angular','Next.js','Tailwind','Node','Python','SQL'].map(n=>`<div class="glass rounded-xl p-3 text-center">${n}</div>`).join('')}
+        </div>
+        <div class="glass rounded-xl p-4"><h3 class="font-semibold mb-2">Workflow Automation</h3><div class="text-xs text-slate-400">Scheduler · Auto Backup · Auto Deploy · Auto Testing</div></div>
+    </div>`,
+    db:()=>`<div class="h-full p-5 overflow-auto">
+        <h2 class="text-lg font-semibold mb-3">🗄 Database Designer</h2>
+        <div class="flex gap-2 mb-3 text-xs">${['MySQL','PostgreSQL','SQLite','Mongo','Firebase','Supabase'].map(x=>`<span class="px-2.5 py-1 glass rounded">${x}</span>`).join('')}</div>
+        <div class="glass rounded-xl p-4 min-h-[260px]">ER Diagram · Table Designer · CRUD Generator · Auth</div>
+    </div>`,
+    api:()=>`<div class="h-full p-5 overflow-auto">
+        <h2 class="text-lg font-semibold mb-3">🔌 REST API Builder</h2>
+        <div class="grid grid-cols-2 gap-3 text-sm">
+            <div class="glass rounded-xl p-4">Endpoint Designer</div>
+            <div class="glass rounded-xl p-4">Auth / JWT / OAuth</div>
+            <div class="glass rounded-xl p-4">API Tester</div>
+            <div class="glass rounded-xl p-4">Documentation</div>
+        </div>
+    </div>`,
+    mob:()=>`<div class="h-full p-5 overflow-auto">
+        <h2 class="text-lg font-semibold mb-3">📱 Mobile App Builder</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+        ${['PWA','Android WebApp','iOS WebApp','Capacitor','Flutter Export','APK','IPA','One Signal'].map(n=>`<div class="glass rounded-xl p-4 text-center">${n}</div>`).join('')}
+        </div>
+    </div>`,
+    deploy:()=>`<div class="h-full p-5 overflow-auto">
+        <h2 class="text-lg font-semibold mb-3">🚀 One‑Click Deployment</h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+        ${['GitHub Pages','Netlify','Vercel','Cloudflare Pages','Docker','ZIP Export','FTP','SSH','Custom Domain','SSL','Monitor','Logs'].map(n=>`<div class="glass rounded-xl p-4 hover:border-violet-500/40 cursor-pointer">${n}</div>`).join('')}
+        </div>
+    </div>`,
+    market:()=>`<div class="h-full p-5 overflow-auto">
+        <h2 class="text-lg font-semibold mb-3">📦 Marketplace</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+        ${['Template Store','Plugin Store','Component Store','Theme Store','AI Prompt Store','Icon Pack','Font Pack','Integration'].map(n=>`<div class="glass rounded-xl p-4 text-center">${n}</div>`).join('')}
+        </div>
+    </div>`,
+    proj:()=>`<div class="h-full p-5 overflow-auto">
+        <h2 class="text-lg font-semibold mb-3">📁 Projects & Team</h2>
+        <div class="glass rounded-xl p-4 mb-3 text-sm">Shared · Live Collaboration · Comments · Version History · Rollback</div>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">${Array.from({length:6}).map((_,i)=>`<div class="glass rounded-xl p-4">Project ${i+1}</div>`).join('')}</div>
+    </div>`,
+    set:()=>`<div class="h-full p-5 overflow-auto">
+        <h2 class="text-lg font-semibold mb-3">⚙️ Settings</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+        ${['Account','Workspace','Theme','Editor','Git / GitHub','Terminal','API Keys','Billing'].map(n=>`<div class="glass rounded-xl p-4">${n}</div>`).join('')}
+        </div>
+    </div>`
+};
+
+/* ========== WINDOW SYSTEM ========== */
+const WS=document.getElementById('workspace');let z=100;
+function openView(id){
+    if(innerWidth<769)WS.innerHTML='';
+    const w=document.createElement('section');
+    w.className='window absolute glass-2 rounded-2xl shadow-2xl flex flex-col overflow-hidden';
+    w.style.cssText=`width:860px;height:560px;left:calc(50% - 430px);top:calc(50% - 280px);z-index:${++z}`;
+    if(innerWidth<769)w.style.cssText='inset:36px 0 68px 0;border-radius:0;width:100%;height:calc(100% - 104px)';
+    const title={dashboard:'Dashboard',web:'Website Builder',sys:'System Builder',ui:'UI Designer',ai:'AI Builder',db:'Database',api:'API Builder',mob:'Mobile Builder',deploy:'Deploy',market:'Marketplace',proj:'Projects',set:'Settings'}[id];
+    w.innerHTML=`<div class="win-head h-9 flex items-center px-2.5 gap-2 bg-black/30 border-b border-white/10 cursor-move shrink-0"><button data-x class="w-3 h-3 rounded-full bg-red-500"></button><i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i><span class="text-[12px]">${title}</span></div><div class="win-body flex-1 overflow-hidden min-h-0"></div><div class="win-resize absolute bottom-0 right-0 w-4 h-4 cursor-nwse-resize hidden md:block"></div>`;
+    WS.appendChild(w);
+    w.querySelector('.win-body').innerHTML=VIEWS[id]();
+    lucide.createIcons();bindWin(w);bindActions();
+    document.querySelectorAll('.window').forEach(x=>x.classList.remove('active'));w.classList.add('active');
 }
-function updateTopApps(){
-  const names=[...document.querySelectorAll('.window')].slice(-3).map(w=>w.dataset.title);
-  topApps.innerHTML=names.map(n=>`<span class="opacity-70">${n}</span>`).join('<span>•</span>');
-}
-
-// Draggable & Resizable with snap
-function makeWindowInteractions(win){
-  const head=win.querySelector('.win-head');
-  const preview=document.getElementById('snap-preview');
-  let dragging=false, sx=0,sy=0,sl=0,st=0, snap=null;
-  head.addEventListener('pointerdown',e=>{
-    if(e.target.closest('button'))return;
-    dragging=true; activate(win); sx=e.clientX; sy=e.clientY; const r=win.getBoundingClientRect(); sl=r.left; st=r.top;
-    win.setPointerCapture(e.pointerId);
-  });
-  window.addEventListener('pointermove',e=>{
-    if(!dragging)return;
-    const nx=sl+(e.clientX-sx), ny=st+(e.clientY-sy);
-    win.style.transform='none'; win.style.left=Math.max(0,nx)+'px'; win.style.top=Math.max(36,ny)+'px';
-    snap=null; preview.classList.add('hidden'); const m=18;
-    if(e.clientY<m){snap='max';preview.style.cssText=`left:4px;top:40px;width:calc(100% - 8px);height:calc(100% - 112px)`;preview.classList.remove('hidden')}
-    else if(e.clientX<m){snap='left';preview.style.cssText=`left:4px;top:40px;width:calc(50% - 6px);height:calc(100% - 112px)`;preview.classList.remove('hidden')}
-    else if(e.clientX>innerWidth-m){snap='right';preview.style.cssText=`left:calc(50% + 2px);top:40px;width:calc(50% - 6px);height:calc(100% - 112px)`;preview.classList.remove('hidden')}
-  });
-  window.addEventListener('pointerup',()=>{
-    if(!dragging)return;dragging=false;preview.classList.add('hidden');
-    if(!snap)return;
-    if(snap==='max'){win.style.left='4px';win.style.top='40px';win.style.width='calc(100% - 8px)';win.style.height='calc(100% - 112px)'}
-    if(snap==='left'){win.style.left='4px';win.style.top='40px';win.style.width='calc(50% - 6px)';win.style.height='calc(100% - 112px)'}
-    if(snap==='right'){win.style.left='calc(50% + 2px)';win.style.top='40px';win.style.width='calc(50% - 6px)';win.style.height='calc(100% - 112px)'}
-  });
-  // resize
-  const res=win.querySelector('.win-resize'); let resizing=false,rsx=0,rsy=0,rw=0,rh=0;
-  res.addEventListener('pointerdown',e=>{resizing=true;rsx=e.clientX;rsy=e.clientY;rw=win.offsetWidth;rh=win.offsetHeight;e.preventDefault()});
-  window.addEventListener('pointermove',e=>{if(!resizing)return;win.style.width=Math.max(320,rw+e.clientX-rsx)+'px';win.style.height=Math.max(240,rh+e.clientY-rsy)+'px'});
-  window.addEventListener('pointerup',()=>resizing=false);
-  win.addEventListener('mousedown',()=>activate(win));
-}
-
-// ---------- APPS ----------
-const APPS = [
-{id:'browser',name:'Browser',icon:'globe',color:'from-sky-500 to-cyan-400',render:()=>{const d=document.createElement('div');d.className='h-full flex flex-col bg-slate-900';d.innerHTML=`<div class="h-10 flex items-center gap-2 px-2 bg-black/40 border-b border-white/10 shrink-0"><div class="flex items-center gap-1 bg-black/60 rounded-lg px-2 h-7 flex-1"><i data-lucide="search" class="w-3.5 h-3.5 opacity-60"></i><input class="bg-transparent outline-none text-xs w-full" value="shikhor.app" placeholder="ค้นหาหรือใส่ URL"></div><button class="p-1.5 hover:bg-white/10 rounded-lg btn-go"><i data-lucide="arrow-right" class="w-4 h-4"></i></button></div><iframe class="w-full flex-1 bg-white" src="https://example.com"></iframe>`;const i=d.querySelector('input'),f=d.querySelector('iframe'),b=d.querySelector('.btn-go');const go=()=>{let v=i.value.trim();if(!v)return;if(!/^https?:/.test(v))v='https://'+v;f.src=v};b.onclick=go;i.onkeydown=e=>e.key==='Enter'&&go();return d}},
-{id:'calculator',name:'Calculator',icon:'calculator',color:'from-violet-600 to-purple-500',render:()=>{const d=document.createElement('div');d.className='h-full grid grid-rows-[auto_1fr] bg-slate-950';d.innerHTML=`<div class="p-4 text-right text-3xl font-light tabular-nums border-b border-white/10" id="calc-out">0</div><div class="grid grid-cols-4 gap-px bg-white/10 p-px" id="calc-keys"></div>`;const keys='C ± % ÷ 7 8 9 × 4 5 6 − 1 2 3 + 0 . ⌫ ='.split(' ');const out=d.querySelector('#calc-out');let cur='0',op=null,prev=null;const calcKeys=d.querySelector('#calc-keys');keys.forEach(k=>{const btn=document.createElement('button');btn.className='h-[56px] bg-slate-900 hover:bg-slate-800 active:bg-slate-700 text-[15px]';btn.textContent=k;if('÷×−+='.includes(k))btn.className+=' text-violet-400';if('C±%'.includes(k))btn.className+=' text-slate-400';btn.onclick=()=>{if(k>='0'&&k<='9'||k==='.'){cur=cur==='0'&&k!=='.'?k:cur+k} else if(k==='C'){cur='0';prev=op=null}else if(k==='⌫'){cur=cur.slice(0,-1)||'0'} else if('÷×−+'.includes(k)){prev=parseFloat(cur);op=k;cur='0'} else if(k==='='){const a=prev??0,b=parseFloat(cur);let r=b;if(op==='÷')r=a/b;if(op==='×')r=a*b;if(op==='−')r=a-b;if(op==='+')r=a+b;cur=String(Math.round(r*1e6)/1e6);op=prev=null} out.textContent=cur};calcKeys.appendChild(btn)});return d}},
-{id:'mail',name:'Mail',icon:'mail',color:'from-blue-600 to-indigo-500',render:()=>{const d=document.createElement('div');d.className='h-full grid md:grid-cols-[240px_1fr] bg-slate-950';d.innerHTML=`<div class="border-r border-white/10 p-2 hidden md:block"><button class="w-full text-left px-3 py-2 rounded-lg bg-violet-600 text-xs mb-2">เขียนใหม่</button><div class="space-y-1 text-xs">${['กล่องเข้า','ส่งแล้ว','แบบร่าง','สแปม'].map((n,i)=>`<div class="px-3 py-2 rounded-lg hover:bg-white/5 ${i===0?'bg-white/10':''}">${n}</div>`).join('')}</div></div><div class="overflow-auto divide-y divide-white/5" id="mail-list"></div>`;const list=d.querySelector('#mail-list');['SHIKHOR Team','Quantum Lab','Playables SDK','สวัสดีจาก AI'].forEach((s,i)=>{const r=document.createElement('div');r.className='p-3 hover:bg-white/5 cursor-pointer';r.innerHTML=`<div class="text-[13px] font-medium">${s}</div><div class="text-[11px] text-slate-400 truncate">ยินดีต้อนรับสู่ v17 • อัปเดตฟีเจอร์ Quantum ใหม่ทั้งหมด</div>`;list.appendChild(r)});return d}},
-{id:'weather',name:'Weather',icon:'cloud-sun',color:'from-amber-500 to-orange-500',render:()=>{const d=document.createElement('div');d.className='h-full p-6 bg-gradient-to-b from-slate-900 to-slate-950 flex flex-col items-center justify-center text-center';d.innerHTML=`<div class="text-[13px] text-slate-400">กรุงเทพมหานคร</div><div class="text-[64px] font-thin leading-none my-3">32°</div><div class="flex items-center gap-2 text-violet-300"><i data-lucide="cloud-sun" class="w-5 h-5"></i><span class="text-sm">มีเมฆบางส่วน</span></div><div class="grid grid-cols-4 gap-3 mt-8 w-full max-w-[320px]">${['จ','อ','พ','พฤ'].map((day,i)=>`<div class="glass rounded-xl py-3"><div class="text-[11px] opacity-70">${day}</div><div class="text-lg my-1">${30+i}°</div></div>`).join('')}</div>`;return d}},
-{id:'clock',name:'Clock',icon:'clock',color:'from-emerald-600 to-teal-500',render:()=>{const d=document.createElement('div');d.className='h-full grid place-items-center bg-slate-950';d.innerHTML=`<div class="text-center"><div class="text-[72px] font-thin tabular-nums tracking-wider" id="clk-big">--:--</div><div class="text-slate-400 text-sm" id="clk-date"></div><div class="flex gap-2 mt-6 justify-center">${['กรุงเทพ','โตเกียว','ลอนดอน'].map(c=>`<div class="glass px-3 py-1.5 rounded-lg text-[11px]">${c}</div>`).join('')}</div></div>`;setInterval(()=>{d.querySelector('#clk-big').textContent=new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});d.querySelector('#clk-date').textContent=new Date().toLocaleDateString('th-TH',{weekday:'long',day:'numeric',month:'long'})},1000);return d}},
-{id:'video',name:'Video',icon:'film',color:'from-rose-600 to-pink-500',render:()=>{const d=document.createElement('div');d.className='h-full bg-black grid place-items-center';d.innerHTML=`<video class="max-h-full max-w-full" controls poster="https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=800"><source src="https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4"></video>`;return d}},
-{id:'pdf',name:'PDF',icon:'file-text',color:'from-zinc-600 to-slate-600',render:()=>{const d=document.createElement('div');d.className='h-full bg-white';d.innerHTML=`<iframe class="w-full h-full" src="https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf"></iframe>`;return d}},
-{id:'image',name:'Image Editor',icon:'image',color:'from-cyan-600 to-blue-500',render:()=>{const d=document.createElement('div');d.className='h-full flex flex-col bg-slate-950';d.innerHTML=`<div class="h-10 flex items-center gap-2 px-2 border-b border-white/10"><input type="file" accept="image/*" class="text-[11px]"><div class="flex gap-1 ml-auto">${['สว่าง','คอนทราสต์','ขาวดำ'].map(t=>`<button class="px-2 py-1 text-[11px] glass rounded">${t}</button>`).join('')}</div></div><div class="flex-1 grid place-items-center overflow-auto p-2"><canvas id="img-cvs" class="max-w-full max-h-full shadow-2xl"></canvas></div>`;const inp=d.querySelector('input'),cvs=d.querySelector('canvas'),ctx=cvs.getContext('2d');inp.onchange=e=>{const f=e.target.files[0];if(!f)return;const img=new Image();img.onload=()=>{cvs.width=img.width;cvs.height=img.height;ctx.drawImage(img,0,0)};img.src=URL.createObjectURL(f)};[...d.querySelectorAll('button')].forEach((b,i)=>b.onclick=()=>{const id=ctx.getImageData(0,0,cvs.width,cvs.height),da=id.data;for(let p=0;p<da.length;p+=4){if(i===0){da[p]*=1.1;da[p+1]*=1.1;da[p+2]*=1.1} if(i===1){const c=1.2;da[p]=(da[p]-128)*c+128;da[p+1]=(da[p+1]-128)*c+128;da[p+2]=(da[p+2]-128)*c+128} if(i===2){const v=0.3*da[p]+0.59*da[p+1]+0.11*da[p+2];da[p]=da[p+1]=da[p+2]=v}} ctx.putImageData(id,0,0)});return d}},
-{id:'music',name:'Music Studio',icon:'music',color:'from-fuchsia-600 to-violet-500',render:()=>{const d=document.createElement('div');d.className='h-full flex flex-col bg-slate-950';d.innerHTML=`<div class="h-12 flex items-center px-3 gap-2 border-b border-white/10"><span class="text-xs opacity-70">Quantum Synth</span><select class="ml-auto bg-black/40 text-xs px-2 py-1 rounded border border-white/10"><option>Sine</option><option>Square</option><option>Saw</option></select></div><div class="flex-1 flex items-end justify-center p-4"><div class="flex" id="keys"></div></div>`;const ctx=new (window.AudioContext||window.webkitAudioContext)();const keys=d.querySelector('#keys');const notes=['C','D','E','F','G','A','B'];notes.forEach((n,i)=>{const k=document.createElement('button');k.className='w-12 h-32 md:w-14 md:h-40 bg-white hover:bg-violet-100 active:bg-violet-200 border border-slate-700 rounded-b-xl mx-px text-slate-800 text-[11px] pb-2 flex items-end justify-center';k.textContent=n;k.onpointerdown=()=>{const o=ctx.createOscillator(),g=ctx.createGain();o.type=d.querySelector('select').value.toLowerCase();o.frequency.value=261.63*Math.pow(2,i/7);o.connect(g);g.connect(ctx.destination);g.gain.setValueAtTime(.3,ctx.currentTime);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.8);o.start();o.stop(ctx.currentTime+.8)};keys.appendChild(k)});return d}},
-{id:'ai',name:'AI Studio',icon:'brain-circuit',color:'from-violet-600 to-indigo-500',render:()=>{const d=document.createElement('div');d.className='h-full flex flex-col bg-slate-950';d.innerHTML=`<div class="p-3 border-b border-white/10"><div class="text-[12px] opacity-70 mb-1">Prompt Lab (ออฟไลน์)</div><textarea class="w-full h-20 bg-black/40 rounded-xl p-2 text-xs outline-none border border-white/10" placeholder="เขียน prompt ภาษาไทย..."></textarea><div class="flex justify-end mt-2"><button class="px-3 py-1.5 text-xs bg-violet-600 rounded-lg hover:bg-violet-500">Generate</button></div></div><div class="flex-1 p-3 overflow-auto text-[13px] leading-relaxed" id="ai-out"><span class="opacity-60">ผลลัพธ์จะแสดงที่นี่...</span></div>`;const ta=d.querySelector('textarea'),btn=d.querySelector('button'),out=d.querySelector('#ai-out');btn.onclick=()=>{out.innerHTML=`<div class="glass rounded-xl p-3"><div class="text-violet-300 text-[11px] mb-1">SHIKHOR Quantum</div>${ta.value?`สรุป: "${ta.value.slice(0,80)}..." ระบบประมวลผลแบบออฟไลน์ ใช้โมเดลขนาดเล็กในเบราว์เซอร์ ตอบสนองไว ปลอดภัย`:''}</div>`};return d}},
-{id:'files',name:'Files',icon:'folder',color:'from-amber-600 to-yellow-500',render:()=>{const d=document.createElement('div');d.className='h-full grid grid-cols-[200px_1fr] bg-slate-950';d.innerHTML=`<div class="border-r border-white/10 p-2 overflow-auto"><div class="text-[11px] opacity-60 px-2 mb-1">ระบบไฟล์เสมือน</div><div id="fs-tree" class="space-y-1 text-[13px]"></div></div><div class="flex flex-col"><div class="h-9 flex items-center px-3 border-b border-white/10 text-xs gap-2"><i data-lucide="hard-drive" class="w-3.5 h-3.5"></i><span>/Quantum</span><button class="ml-auto px-2 py-1 glass rounded text-[11px]" id="new-file">+ ไฟล์</button></div><div id="fs-grid" class="flex-1 p-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 content-start overflow-auto"></div></div>`;const tree=d.querySelector('#fs-tree'),grid=d.querySelector('#fs-grid');const fs=JSON.parse(localStorage.getItem('shikhor-fs')||'{"Documents":[],"Pictures":[],"Music":[]}');function render(){tree.innerHTML=Object.keys(fs).map(k=>`<div class="px-2 py-1.5 rounded hover:bg-white/5 cursor-pointer flex items-center gap-2"><i data-lucide="folder" class="w-3.5 h-3.5 text-amber-400"></i>${k}</div>`).join('');grid.innerHTML=[...fs.Documents,...fs.Pictures].map(f=>`<div class="glass rounded-xl p-3 text-center hover:bg-white/10 cursor-pointer"><i data-lucide="file" class="w-6 h-6 mx-auto mb-1 opacity-70"></i><div class="text-[11px] truncate">${f}</div></div>`).join('');lucide.createIcons()}render();d.querySelector('#new-file').onclick=()=>{const n=prompt('ชื่อไฟล์:');if(n){fs.Documents.push(n);localStorage.setItem('shikhor-fs',JSON.stringify(fs));render()}};return d}},
-{id:'kanban',name:'Kanban',icon:'trello',color:'from-sky-600 to-blue-500',render:()=>{const d=document.createElement('div');d.className='h-full p-3 bg-slate-950 overflow-auto';d.innerHTML=`<div class="grid md:grid-cols-3 gap-3 h-full">${['ต้องทำ','กำลังทำ','เสร็จแล้ว'].map(t=>`<div class="glass rounded-2xl flex flex-col"><div class="px-3 py-2 border-b border-white/10 text-[12px] font-medium">${t}</div><div class="flex-1 p-2 space-y-2 min-h-[120px]" data-col="${t}"></div><button class="m-2 px-2 py-1 text-[11px] glass rounded-lg hover:bg-white/10" data-add="${t}">+ เพิ่ม</button></div>`).join('')}</div>`;const data=JSON.parse(localStorage.getItem('shikhor-kanban')||'{}');function save(){localStorage.setItem('shikhor-kanban',JSON.stringify(data))}function render(){d.querySelectorAll('[data-col]').forEach(col=>{const t=col.dataset.col;col.innerHTML='';(data[t]||['ออกแบบ UI Quantum','ทดสอบ snap windows','เชื่อม Playables SDK']).forEach((txt,i)=>{const c=document.createElement('div');c.className='glass p-2.5 rounded-xl text-[12px] cursor-grab active:cursor-grabbing';c.draggable=true;c.textContent=txt;c.ondragstart=e=>e.dataTransfer.setData('text',t+'|'+i);col.appendChild(c)});col.ondragover=e=>e.preventDefault();col.ondrop=e=>{const [from,idx]=e.dataTransfer.getData('text').split('|');const item=(data[from]||[]).splice(idx,1)[0];data[t]=data[t]||[];data[t].push(item);save();render()}})}d.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{const t=b.dataset.add;const v=prompt('งานใหม่:');if(v){data[t]=data[t]||[];data[t].push(v);save();render()}});render();return d}},
-{id:'whiteboard',name:'Whiteboard',icon:'pen-tool',color:'from-emerald-600 to-green-500',render:()=>{const d=document.createElement('div');d.className='h-full flex flex-col bg-slate-950';d.innerHTML=`<div class="h-10 flex items-center gap-2 px-2 border-b border-white/10"><input type="color" value="#8b5cf6" class="w-7 h-7 rounded bg-transparent"><input type="range" min="1" max="20" value="3" class="w-24"><button class="ml-auto text-[11px] px-2 py-1 glass rounded" id="clear">ล้าง</button></div><canvas class="flex-1 touch-none bg-[#05070f]"></canvas>`;const cvs=d.querySelector('canvas'),ctx=cvs.getContext('2d'),col=d.querySelector('input[type=color]'),sz=d.querySelector('input[type=range]');function rs(){cvs.width=cvs.offsetWidth*devicePixelRatio;cvs.height=cvs.offsetHeight*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);ctx.lineCap='round'}new ResizeObserver(rs).observe(cvs);rs();let draw=false, lx=0,ly=0;cvs.onpointerdown=e=>{draw=true;[lx,ly]=[e.offsetX,e.offsetY]};cvs.onpointermove=e=>{if(!draw)return;ctx.strokeStyle=col.value;ctx.lineWidth=sz.value;ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(e.offsetX,e.offsetY);ctx.stroke();[lx,ly]=[e.offsetX,e.offsetY]};window.addEventListener('pointerup',()=>draw=false);d.querySelector('#clear').onclick=()=>ctx.clearRect(0,0,cvs.width,cvs.height);return d}},
-{id:'mindmap',name:'Mind Map',icon:'network',color:'from-pink-600 to-rose-500',render:()=>{const d=document.createElement('div');d.className='h-full bg-slate-950 relative overflow-hidden';d.innerHTML=`<svg class="absolute inset-0 w-full h-full"></svg><div class="absolute inset-0" id="nodes"></div><div class="absolute bottom-3 left-3 text-[11px] glass px-2 py-1 rounded-lg">ดับเบิลคลิกเพื่อเพิ่มโหนด</div>`;const svg=d.querySelector('svg'),wrap=d.querySelector('#nodes');let nodes=[{x:200,y:160,t:'SHIKHOR v17'},{x:380,y:120,t:'Quantum UI'},{x:380,y:200,t:'AI ออฟไลน์'}],links=[[0,1],[0,2]];function draw(){svg.innerHTML='';links.forEach(([a,b])=>{const n1=nodes[a],n2=nodes[b];const l=document.createElementNS('http://www.w3.org/2000/svg','line');l.setAttribute('x1',n1.x);l.setAttribute('y1',n1.y);l.setAttribute('x2',n2.x);l.setAttribute('y2',n2.y);l.setAttribute('stroke','rgba(139,92,246,.5)');l.setAttribute('stroke-width','2');svg.appendChild(l)});wrap.innerHTML='';nodes.forEach((n,i)=>{const el=document.createElement('div');el.className='absolute -translate-x-1/2 -translate-y-1/2 glass px-3 py-1.5 rounded-xl text-[12px] cursor-move select-none';el.style.left=n.x+'px';el.style.top=n.y+'px';el.textContent=n.t;el.onpointerdown=e=>{const dx=e.clientX-n.x,dy=e.clientY-n.y;const mm=ev=>{n.x=ev.clientX-dx;n.y=ev.clientY-dy;draw()};const mu=()=>{removeEventListener('pointermove',mm)};addEventListener('pointermove',mm);addEventListener('pointerup',mu,{once:true})};wrap.appendChild(el)})}draw();d.ondblclick=e=>{const r=d.getBoundingClientRect();nodes.push({x:e.clientX-r.left,y:e.clientY-r.top,t:'ไอเดีย'});links.push([0,nodes.length-1]);draw()};return d}},
-{id:'terminal',name:'Terminal',icon:'terminal',color:'from-slate-600 to-gray-700',render:()=>{const d=document.createElement('div');d.className='h-full bg-black text-green-400 font-mono text-[12px] flex flex-col';d.innerHTML=`<div class="flex-1 p-3 overflow-auto" id="term-out"><div>SHIKHOR OS v17 Quantum Terminal</div><div>พิมพ์ 'help' เพื่อดูคำสั่ง • สวัสดีชาวไทย</div></div><div class="h-8 flex items-center px-3 border-t border-white/10"><span class="text-violet-400 mr-2">quantum@shikhor:~$</span><input class="flex-1 bg-transparent outline-none text-green-300" id="term-in" autofocus></div>`;const out=d.querySelector('#term-out'),inp=d.querySelector('#term-in');const cmds={help:'คำสั่ง: help, date, clear, uname, echo, quantum',date:()=>new Date().toLocaleString('th-TH'),uname:'SHIKHOR-OS v17 Quantum Edition (Web)',quantum:'✨ ควอนตัมพร้อมทำงาน • Playables SDK ทำงานปกติ'};inp.onkeydown=e=>{if(e.key!=='Enter')return;const v=inp.value.trim();const line=document.createElement('div');line.innerHTML=`<span class="text-violet-400">quantum@shikhor:~$</span> ${v}`;out.appendChild(line);let res='ไม่พบคำสั่ง';if(v.startsWith('echo '))res=v.slice(5);else if(cmds[v])res=typeof cmds[v]==='function'?cmds[v]():cmds[v];if(v==='clear'){out.innerHTML='';}else{const r=document.createElement('div');r.className='text-slate-300';r.textContent=res;out.appendChild(r)}inp.value='';out.scrollTop=out.scrollHeight};return d}},
-];
-
-function createWindow(app){
-  if(innerWidth<768){document.querySelectorAll('.window').forEach(w=>w.remove())}
-  const win=document.createElement('div');
-  win.className='window absolute glass-2 rounded-2xl shadow-2xl flex flex-col overflow-hidden';
-  win.dataset.app=app.id; win.dataset.title=app.name;
-  const w=app.id==='browser'?900:780, h=app.id==='browser'?600:520;
-  win.style.width=w+'px'; win.style.height=h+'px';
-  win.style.left=`calc(50% - ${w/2}px)`; win.style.top=`calc(50% - ${h/2}px)`; win.style.zIndex=++zIndex;
-  if(innerWidth<768){win.style.left='0px';win.style.top='36px';win.style.width='100%';win.style.height='calc(100% - 104px)';win.style.borderRadius='0'}
-  win.innerHTML=`<div class="win-head h-9 flex items-center px-2.5 gap-1.5 bg-black/30 border-b border-white/10 cursor-move select-none shrink-0"><div class="flex gap-1.5 mr-1"><button data-act="close" class="w-3 h-3 rounded-full bg-red-500 hover:brightness-110"></button><button data-act="min" class="w-3 h-3 rounded-full bg-yellow-500/90 hover:brightness-110 hidden sm:block"></button><button data-act="max" class="w-3 h-3 rounded-full bg-green-500/90 hover:brightness-110 hidden sm:block"></button></div><i data-lucide="${app.icon}" class="w-3.5 h-3.5 opacity-80"></i><span class="text-[12px] truncate">${app.name}</span><div class="flex-1"></div></div><div class="win-body flex-1 overflow-hidden bg-slate-950/70 relative min-h-0"></div><div class="win-resize absolute right-0 bottom-0 w-4 h-4 cursor-nwse-resize hidden sm:block"></div>`;
-  workspace.appendChild(win);
-  win.querySelector('.win-body').appendChild(app.render());
-  makeWindowInteractions(win);
-  activate(win);
-  win.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>{const a=b.dataset.act;if(a==='close'){win.remove();updateTopApps()}if(a==='min'){win.style.transform='scale(.9)';win.style.opacity='.0';setTimeout(()=>win.style.display='none',150)}if(a==='max'){const isMax=win.dataset.max==='1';if(isMax){win.style.left=win.dataset.ol;win.style.top=win.dataset.ot;win.style.width=win.dataset.ow;win.style.height=win.dataset.oh;win.dataset.max='0'}else{win.dataset.ol=win.style.left;win.dataset.ot=win.style.top;win.dataset.ow=win.style.width;win.dataset.oh=win.style.height;win.style.left='4px';win.style.top='40px';win.style.width='calc(100% - 8px)';win.style.height='calc(100% - 112px)';win.dataset.max='1'}}});
-  lucide.createIcons();
-  return win;
-}
-
-// ---------- INIT OS ----------
-function initOS(){
-  
-  // 4 Dark Modes + Remember + Auto
-  const themes = {
-    'theme-1': {bg:'#000000', aurora:0.3, name:'ดำสนิท'},
-    'theme-2': {bg:'#020617', aurora:0.7, name:'ดำม่วง'},
-    'theme-3': {bg:'#0a0a0f', aurora:0.5, name:'ดำเทา'},
-    'theme-4': {bg:'#000000', aurora:0.1, name:'AMOLED'}
-  };
-  function applyTheme(id){
-    const t=themes[id]; if(!t) return;
-    document.body.style.background=t.bg;
-    document.getElementById('aurora').style.opacity=t.aurora;
-    localStorage.setItem('shikhor-theme', id);
-  }
-  Object.keys(themes).forEach(id=>{
-    const btn=document.getElementById(id);
-    if(btn) btn.onclick=()=>applyTheme(id);
-  });
-  // load saved
-  const saved=localStorage.getItem('shikhor-theme');
-  if(saved) applyTheme(saved);
-  else {
-    // auto by time 19:00-06:00
-    const h=new Date().getHours();
-    if(h>=19 || h<6) applyTheme('theme-4'); else applyTheme('theme-2');
-  }
-
-
-  // Clock
-  setInterval(()=>{document.getElementById('clock-top').textContent=new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})},1000);
-  // Dock
-  const dock=document.getElementById('dock-apps');
-  APPS.forEach(app=>{const b=document.createElement('button');b.className='dock-item w-11 h-11 grid place-items-center rounded-xl hover:bg-white/10 relative group shrink-0';b.innerHTML=`<div class="w-9 h-9 rounded-[10px] bg-gradient-to-br ${app.color} grid place-items-center shadow-lg shadow-black/20"><i data-lucide="${app.icon}" class="w-[18px] h-[18px] text-white"></i></div>`;b.title=app.name;b.onclick=()=>createWindow(app);dock.appendChild(b)});
-  // Store
-  const store=document.getElementById('store-grid');
-  APPS.forEach(app=>{const c=document.createElement('div');c.className='glass-2 rounded-[1.3rem] p-4 hover:bg-white/[0.08] transition cursor-pointer group';c.innerHTML=`<div class="w-12 h-12 rounded-2xl bg-gradient-to-br ${app.color} grid place-items-center mb-3 shadow-lg group-hover:scale-105 transition"><i data-lucide="${app.icon}" class="w-6 h-6 text-white"></i></div><div class="font-medium text-[14px]">${app.name}</div><div class="text-[11px] text-slate-400 mt-0.5">พร้อมติดตั้ง</div><button class="mt-3 w-full py-1.5 rounded-lg bg-white/10 group-hover:bg-violet-600 text-[12px] transition">เปิด</button>`;c.onclick=()=>{createWindow(app);toggleLaunchpad(false)};store.appendChild(c)});
-  lucide.createIcons();
-
-  // Default windows
-  setTimeout(()=>createWindow(APPS[0]),300);
-  setTimeout(()=>createWindow(APPS[10]),600);
-
-  // AI
-  setupAI();
-  setupNotes();
-}
-
-// ---------- AI ASSISTANT ----------
-function setupAI(){
-  const msgsEl=document.getElementById('ai-messages');
-  const input=document.getElementById('ai-input');
-  const send=document.getElementById('ai-send');
-  let memory=JSON.parse(localStorage.getItem('shikhor-ai-memory')||'[]');
-  if(memory.length===0){memory=[{role:'assistant',content:'สวัสดีค่ะ! ฉันคือ SHIKHOR AI ผู้ช่วย Quantum ของคุณ มีอะไรให้ช่วยไหมคะ? 😊'}]}
-  function render(){msgsEl.innerHTML=memory.map(m=>`<div class="flex ${m.role==='user'?'justify-end':''}"><div class="max-w-[85%] px-3 py-2 rounded-2xl ${m.role==='user'?'bg-violet-600 rounded-br-md':'glass rounded-bl-md'}">${m.content}</div></div>`).join('');msgsEl.scrollTop=msgsEl.scrollHeight;localStorage.setItem('shikhor-ai-memory',JSON.stringify(memory.slice(-50)))}
-  function reply(q){const a=q.toLowerCase();if(a.includes('สวัสดี'))return'สวัสดีค่ะ ยินดีต้อนรับสู่ SHIKHOR OS v17 Quantum Edition!';if(a.includes('เวลา'))return`ตอนนี้ ${new Date().toLocaleTimeString('th-TH')}`;if(a.includes('playables'))return'Playables SDK v16 พร้อมใช้งาน ระบบตรวจพบและคงไว้ตามต้นฉบับค่ะ';if(a.includes('ควอนตัม'))return'Quantum Engine กำลังเร่งความเร็ว UI ด้วย glassmorphism 2.0 และ aurora canvas นะคะ';return`เข้าใจแล้วค่ะ: "${q}" — ฉันจดจำแบบออฟไลน์ไว้ให้แล้ว (หน่วยความจำถาวร)`}
-  function sendMsg(){const v=input.value.trim();if(!v)return;memory.push({role:'user',content:v});input.value='';render();setTimeout(()=>{memory.push({role:'assistant',content:reply(v)});render()},400)}
-  send.onclick=sendMsg;input.onkeydown=e=>e.key==='Enter'&&sendMsg();render();
-  document.getElementById('ai-toggle').onclick=()=>document.getElementById('ai-panel').classList.toggle('hidden');
-  document.querySelectorAll('.ai-tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('.ai-tab').forEach(b=>b.classList.remove('bg-white/15'));t.classList.add('bg-white/15');const tab=t.dataset.tab;document.getElementById('ai-chat').classList.toggle('hidden',tab!=='chat');document.getElementById('ai-notes').classList.toggle('hidden',tab!=='notes');document.getElementById('ai-notes').classList.toggle('flex',tab==='notes')});
+function bindWin(w){
+    const h=w.querySelector('.win-head'),S=document.getElementById('snap');
+    let dr=false,sx=0,sy=0,sl=0,st=0,sn=null;
+    h.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;dr=true;w.style.zIndex=++z;sx=e.clientX;sy=e.clientY;const r=w.getBoundingClientRect();sl=r.left;st=r.top;w.setPointerCapture(e.pointerId)});
+    addEventListener('pointermove',e=>{if(!dr)return;w.style.left=Math.max(0,sl+e.clientX-sx)+'px';w.style.top=Math.max(36,st+e.clientY-sy)+'px';
+        sn=null;S.classList.add('hidden');const m=18;
+        if(e.clientY<m){sn='M';S.style.cssText='inset:40px 4px 68px 4px';S.classList.remove('hidden')}
+        else if(e.clientX<m){sn='L';S.style.cssText='left:4px;top:40px;width:calc(50% - 6px);bottom:68px';S.classList.remove('hidden')}
+        else if(e.clientX>innerWidth-m){sn='R';S.style.cssText='left:calc(50% + 2px);top:40px;right:4px;bottom:68px';S.classList.remove('hidden')}
+    });
+    addEventListener('pointerup',()=>{if(!dr)return;dr=false;S.classList.add('hidden');if(sn==='M')w.style.cssText='inset:40px 4px 68px 4px;width:auto;height:auto;border-radius:14px';if(sn==='L')w.style.cssText='left:4px;top:40px;width:calc(50% - 6px);bottom:68px;height:auto';if(sn==='R')w.style.cssText='left:calc(50% + 2px);top:40px;right:4px;bottom:68px;width:auto;height:auto'});
+    w.querySelector('[data-x]').onclick=()=>w.remove();
+    const R=w.querySelector('.win-resize');let rs=false,rw=0,rh=0,rx=0,ry=0;
+    R.addEventListener('pointerdown',e=>{rs=true;rw=w.offsetWidth;rh=w.offsetHeight;rx=e.clientX;ry=e.clientY});
+    addEventListener('pointermove',e=>{if(!rs)return;w.style.width=Math.max(320,rw+e.clientX-rx)+'px';w.style.height=Math.max(220,rh+e.clientY-ry)+'px'});
+    addEventListener('pointerup',()=>rs=false);
+    w.addEventListener('mousedown',()=>{document.querySelectorAll('.window').forEach(x=>x.classList.remove('active'));w.classList.add('active');w.style.zIndex=++z});
 }
 
-// ---------- NOTES (IndexedDB) ----------
-let db; const dbReq=indexedDB.open('shikhor-quantum-v17',1);
-dbReq.onupgradeneeded=e=>{db=e.target.result;if(!db.objectStoreNames.contains('notes'))db.createObjectStore('notes',{keyPath:'id'})};
-dbReq.onsuccess=e=>{db=e.target.result;loadLatestNote()};
+/* ========== NAVIGATION ========== */
+document.querySelectorAll('.studio-nav-item').forEach(n=>n.onclick=e=>{
+    e.preventDefault();
+    document.querySelectorAll('.studio-nav-item').forEach(x=>x.classList.remove('active'));
+    n.classList.add('active');
+    openView(n.dataset.view);
+});
 
-function setupNotes(){
-  const titleEl=document.getElementById('note-title');
-  const editor=document.getElementById('note-editor');
-  const preview=document.getElementById('note-preview');
-  const history=document.getElementById('note-history');
-  const saveBtn=document.getElementById('note-save');
-  let currentId=null;
-  function md(s){return s.replace(/^### (.*$)/gim,'<h3 class="font-semibold text-[13px] mt-2">$1</h3>').replace(/^## (.*$)/gim,'<h2 class="font-semibold text-[14px] mt-2">$1</h2>').replace(/^# (.*$)/gim,'<h1 class="font-bold text-[16px] mt-2">$1</h1>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>').replace(/`(.*?)`/g,'<code class="bg-white/10 px-1 rounded">$1</code>').replace(/\n/g,'<br>')}
-  editor.oninput=()=>preview.innerHTML=md(editor.value);
-  saveBtn.onclick=()=>{
-    const tx=db.transaction('notes','readwrite');const store=tx.objectStore('notes');
-    const now=Date.now();const id=currentId||'note-'+now;
-    const getReq=store.get(id);getReq.onsuccess=()=>{const prev=getReq.result;const versions=prev?.versions||[];if(prev)versions.unshift({content:prev.content,at:prev.updated});const note={id,title:titleEl.value||'ไม่มีชื่อ',content:editor.value,updated:now,versions:versions.slice(0,10)};store.put(note);currentId=id;loadHistory(note);localStorage.setItem('shikhor-last-note',id)}};
-  window.loadLatestNote=()=>{const last=localStorage.getItem('shikhor-last-note');if(!last)return;const tx=db.transaction('notes');tx.objectStore('notes').get(last).onsuccess=e=>{const n=e.target.result;if(n){titleEl.value=n.title;editor.value=n.content;preview.innerHTML=md(n.content);currentId=n.id;loadHistory(n)}}}
-  function loadHistory(note){history.innerHTML=`<div class="mb-1 opacity-70">ประวัติ (${note.versions.length})</div>`+note.versions.map(v=>`<div class="py-0.5 border-b border-white/5 flex justify-between"><span>${new Date(v.at).toLocaleTimeString('th-TH')}</span><span class="truncate max-w-[200px] opacity-70">${v.content.slice(0,40)}</span></div>`).join('')}
+/* ========== COMMAND PALETTE ========== */
+const CMD=document.getElementById('cmdk'),CI=document.getElementById('cmdk-in'),CL=document.getElementById('cmdk-list');
+const ITEMS=Object.entries({dashboard:'Dashboard',web:'Website Builder',sys:'System Builder',ui:'UI Designer',ai:'AI Builder',db:'Database',api:'API Builder',mob:'Mobile Builder',deploy:'Deploy',market:'Marketplace',proj:'Projects',set:'Settings','new-web':'New Website','new-sys':'New System','new-mob':'New Mobile App','open':'Open Project','import':'Import Project','deploy-now':'Deploy Now','git-push':'Git Push','backup':'Backup Now'});
+function showCmd(q=''){CL.innerHTML=ITEMS.filter(([k,v])=>v.toLowerCase().includes(q.toLowerCase())).map(([k,v])=>`<div class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10 cursor-pointer" data-k="${k}"><i data-lucide="arrow-right" class="w-4 h-4 text-violet-400"></i><span>${v}</span></div>`).join('');lucide.createIcons();CL.querySelectorAll('[data-k]').forEach(x=>x.onclick=()=>{CMD.classList.add('hidden');const k=x.dataset.k;if(VIEWS[k])openView(k)})}
+addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();CMD.classList.toggle('hidden');CI.focus();showCmd()}if(e.key==='Escape')CMD.classList.add('hidden')});
+CI.oninput=e=>showCmd(e.target.value);
+CMD.addEventListener('click',e=>e.target.matches('[data-close]')&&CMD.classList.add('hidden'));
+document.querySelector('[data-cmd]').onclick=()=>{CMD.classList.remove('hidden');CI.focus();showCmd()};
+
+/* ========== AI ========== */
+const AM=document.getElementById('ai-msgs'),AI=document.getElementById('ai-in'),AS=document.getElementById('ai-send');
+const MEM=JSON.parse(localStorage.getItem('sh-ai')||'[]');
+function add(r,c){const d=document.createElement('div');d.className=r==='u'?'ml-8':'mr-8';d.innerHTML=`<div class="glass-studio rounded-2xl rounded-tl-sm p-3 ${r==='u'?'ml-auto bg-violet-600/20':'rounded-tl-sm'}">${c}</div>`;AM.appendChild(d);AM.scrollTop=AM.scrollHeight}
+MEM.forEach(m=>add(m.r,m.c));
+if(!MEM.length)add('a','👋 ยินดีต้อนรับสู่ SHIKHOR AI<br>• Prompt → Website / System / App<br>• สร้างโค้ด HTML/CSS/JS/TS/React/Next/Tailwind<br>• ออกแบบ Logo, Icon, Color, Font<br>• Deploy แบบ 1‑Click');
+AS.onclick=AI.onkeydown=e=>{if(e.type==='keydown'&&e.key!=='Enter')return;const t=AI.value.trim();if(!t)return;add('u',t);AI.value='';
+    const a=t.toLowerCase();let r='';
+    if(a.includes('landing'))r='✅ สร้าง <b>Landing Page</b> เสร็จ · Hero + CTA + Feature + Footer · Responsive · Tailwind CSS';
+    else if(a.includes('ระบบสมาชิก'))r='✅ <b>ระบบสมาชิก</b> · Register / Login / Profile / Role / JWT · MySQL · REST API';
+    else if(a.includes('pos'))r='✅ <b>ระบบ POS</b> · สินค้า · ออเดอร์ · ชำระเงิน · รายงาน · คลัง';
+    else if(a.includes('react'))r='✅ สร้าง Component React + TypeScript + Tailwind พร้อมใช้';
+    else r=`🤖 ประมวลผล: <b>${t}</b><br>→ สร้างโครงสร้าง → ออกแบบ UI → เขียนโค้ด → ทดสอบ → พร้อม Deploy`;
+    setTimeout(()=>add('a',r),650);
+};
+
+/* ========== ACTIONS ========== */
+function bindActions(){
+    document.querySelectorAll('[data-new-web]').forEach(b=>b.onclick=()=>openView('web'));
+    document.querySelectorAll('[data-new-sys]').forEach(b=>b.onclick=()=>openView('sys'));
+    document.querySelectorAll('[data-new-mob]').forEach(b=>b.onclick=()=>openView('mob'));
+    document.querySelectorAll('[data-new]').forEach(b=>b.onclick=()=>{CMD.classList.remove('hidden');CI.value='new';showCmd('new');CI.focus()});
 }
 
-// ---------- COMMAND PALETTE ----------
-const cmdk=document.getElementById('cmdk'), cmdkInput=document.getElementById('cmdk-input'), cmdkList=document.getElementById('cmdk-list');
-function renderCmd(q=''){const items=[...APPS.map(a=>({t:a.name,i:a.icon,act:()=>createWindow(a)})),{t:'สลับ AI Assistant',i:'sparkles',act:()=>document.getElementById('ai-panel').classList.toggle('hidden')},{t:'ล็อคหน้าจอ',i:'lock',act:()=>location.reload()}].filter(x=>x.t.toLowerCase().includes(q.toLowerCase()));cmdkList.innerHTML=items.map((x,i)=>`<button data-i="${i}" class="w-full text-left px-3 py-2.5 rounded-xl hover:bg-white/10 flex items-center gap-3 ${i===0?'bg-white/5':''}"><i data-lucide="${x.i}" class="w-4 h-4 opacity-70"></i><span class="text-[14px]">${x.t}</span></button>`).join('');lucide.createIcons();cmdkList.querySelectorAll('button').forEach((b,i)=>b.onclick=()=>{items[i].act();toggleCmdk(false)})}
-function toggleCmdk(show){cmdk.classList.toggle('hidden',!show);if(show){cmdkInput.value='';renderCmd('');setTimeout(()=>cmdkInput.focus(),50)}}
-document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();toggleCmdk(true)}if(e.key==='Escape'){toggleCmdk(false);toggleLaunchpad(false)}});
-cmdkInput.oninput=e=>renderCmd(e.target.value);document.getElementById('cmd-btn').onclick=()=>toggleCmdk(true);cmdk.querySelector('[data-close]').onclick=()=>toggleCmdk(false);
-
-// ---------- LAUNCHPAD ----------
-const launchpad=document.getElementById('launchpad');
-function toggleLaunchpad(show){launchpad.classList.toggle('hidden',!show)}
-document.getElementById('launchpad-btn').onclick=()=>toggleLaunchpad(true);
-launchpad.querySelector('[data-close]').onclick=()=>toggleLaunchpad(false);
-
-// ---------- PWA ----------
-if('serviceWorker' in navigator){
-  const swCode=`self.addEventListener('install',e=>{self.skipWaiting()});self.addEventListener('activate',e=>{});self.addEventListener('fetch',e=>{})`;
-  const blob=new Blob([swCode],{type:'text/javascript'});navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
-}
-
-// Playables on ready
-PlayablesSDK.onReady(()=>{console.log('SHIKHOR v17 ready with Playables')});
-
-})(); 
+/* ========== BOOT ========== */
+setInterval(()=>document.getElementById('clock').textContent=new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}),1000);
+function boot(){openView('dashboard');setTimeout(()=>openView('web'),500);bindActions()}
 </script>
-<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
-
-</body></html>
+</body>
+</html>
